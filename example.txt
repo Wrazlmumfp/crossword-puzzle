@@ -1,0 +1,30 @@
+# Solution
++Ein Wort
+
+# Info printed above the clues
+-\textit{ä $\mapsto$ ae}, \textit{ö $\mapsto$ oe}, \textit{ü $\mapsto$ ue} und \textit{ß $\mapsto$ ss}.
+
+# Some sentences
+*Bernhard ist echt ein §toller §Kerl.
+*If you said §goodbye to me §tonight, there would §still be §music left to §write.
+
+# Now finally words
+Bernhard: Ein toller Typ.
+Passau: Schönste Stadt der Welt.
+Venedig: Genannt \textit{Das Passau Italiens}.
+Eisenach: Geburtsort von Johann Sebastian Bach.
+Biden: US-Präsident.
+Franziskus: Papst.
+Pi: $\pi$
+Requiem: Letztes Werk Mozarts.
+Chor: Gemeinschaft von Sängern.
+Tenor: Hohe Männerstimme.
+Alt: Tiefe Frauenstimme (``Hanna ist ...'').
+Bass: Tiefste Männerstimme.
+Countertenor: Männerstimme mit Bruststimme Alt-Lage.
+Inn: Dreckigster der drei Flüsse Passaus.
+Donau: Zweitdreckigster der drei Flüsse Passaus.
+Ilz: Drittdreckigster der drei Flüsse Passaus.
+Rhein: Dreckigster Fluss Bonns.
+Tiber: Fluss in Rom.
+Wein: Alkoholhaltiges Getränk.
