@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import itertools
 import numpy as np
 import random
 import time
