@@ -531,9 +531,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     if args.title == None:
         args.title = "Crossword Puzzle" if args.english else "Kreuzworträtsel"
 
-    f = open(args.input,"r")
-    lines = f.readlines()
-    f.close()
+    with open(args.input, "r") as f:
+        lines = f.readlines()
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -603,7 +602,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("#words: "+str(c.numWords()))
         print("given:  "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Time:   "+str(t1-t0)[:5] + " s")
-    f = open(args.output,"w")
-    print(latex(c,args.title,args.subtitle,info),file=f)
-    f.close()
-    
+
+    with open(args.output,"w") as f:
+        print(latex(c,args.title,args.subtitle,info),file=f)
