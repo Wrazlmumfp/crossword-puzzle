@@ -30,7 +30,6 @@ class crossword:
         self.xMax = 0
         self.yMin = 0
         self.yMax = 0
-        return
     def __getitem__(self,i):
         return self.get(i)
     def get(self,x,y=None):
