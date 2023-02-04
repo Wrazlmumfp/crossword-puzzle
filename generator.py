@@ -520,7 +520,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     parser.add_argument("--english","-en",action="store_true",
                         help="Changes language of output to english (default german).")
     parser.add_argument("--seed", "-s", type=int, default=None,
-                        help="Maximum number of desired columns for the output puzzle.")
+                        help="Specify a seed to make the puzzle creation deterministic.")
     args = parser.parse_args()
 
         
