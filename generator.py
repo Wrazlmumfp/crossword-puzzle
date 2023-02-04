@@ -520,6 +520,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Does not write anything on the console.")
     parser.add_argument("--english","-en",action="store_true",
                         help="Changes language of output to english (default german).")
+    parser.add_argument("--seed", "-s", type=int, default=None,
+                        help="Maximum number of desired columns for the output puzzle.")
     args = parser.parse_args()
 
         
@@ -532,6 +534,9 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     f = open(args.input,"r")
     lines = f.readlines()
     f.close()
+
+    if args.seed is not None:
+        random.seed(args.seed)
     
     solutions = []
     wordnum = 0 # words without sentences
