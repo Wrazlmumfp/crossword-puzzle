@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import itertools
 import numpy as np
 import random
 import time
@@ -8,30 +7,25 @@ import string
 
 
 class crossword:
-    letters = dict()      # letters[(1,5)] == "R"
-    wordsHor = dict()     # wordsHor[(6,4)] == "WORD"
-    wordsVer = dict()     # wordsVer[(7,1)] == "WORD"
-    clues = dict()        # clues["WORD"] == "Some word."
-    intersections = set() # set of all coordinates where two words intersect
-    solutionDict = dict() # solutionDict[(1,5)] == "B"  (where "B" is the index of the letter at (1,5) in the solution, NOT the letter at position (1,5))
-    solution = None       # solution
-    xMin = 0
-    xMax = 0
-    yMin = 0
-    yMax = 0
     def __init__(self):
+        # letters[(1,5)] == "R"
         self.letters = dict()
+        # wordsHor[(6,4)] == "WORD"
         self.wordsHor = dict()
+        # wordsVer[(7,1)] == "WORD"
         self.wordsVer = dict()
+        # clues["WORD"] == "Some word."
         self.clues = dict()
+        # set of all coordinates where two words intersect
         self.intersections = set()
+        # solutionDict[(1,5)] == "B"
+        # where "B" is the index of the letter at (1,5) in the solution, NOT the letter at position (1,5)
         self.solutionDict = dict()
         self.solution = None
         self.xMin = 0
         self.xMax = 0
         self.yMin = 0
         self.yMax = 0
-        return
     def __getitem__(self,i):
         return self.get(i)
     def get(self,x,y=None):
@@ -81,9 +75,9 @@ class crossword:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][o]{"+self.get(d)+"}"
             else:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "{"+self.get(d)+"}"
-        wordsHor_sorted = list(self.wordsHor.keys()).copy()
+        wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
-        wordsVer_sorted = list(self.wordsVer.keys()).copy()
+        wordsVer_sorted = list(self.wordsVer.keys())
         wordsVer_sorted.sort(key=lambda x: x[0])
         words_sorted = wordsHor_sorted + wordsVer_sorted # note: not words, but coordinates to words!
         words_bothHorVer = [c for c in wordsHor_sorted if c in wordsVer_sorted]
@@ -108,9 +102,9 @@ class crossword:
         return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
-        wordsHor_sorted = list(self.wordsHor.keys()).copy()
+        wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
-        wordsVer_sorted = list(self.wordsVer.keys()).copy()
+        wordsVer_sorted = list(self.wordsVer.keys())
         wordsVer_sorted.sort(key=lambda x: x[0])
         hor = "{\\Large \\textbf{Horizontal}}\n" \
             +"\\begin{multicols}{2}\n" \
@@ -232,9 +226,9 @@ class crossword:
             return (0,0)
         # (many intersections, few columns, few rows, wordsHor/wordsVer balanced)
         return (
-            3*self.numIntersections(), \
-            self.numWords()**2*1/self.numCols(), \
-            self.numWords()**2*1/self.numRows(), \
+            3*self.numIntersections(),
+            self.numWords()**2*1/self.numCols(),
+            self.numWords()**2*1/self.numRows(),
             1/8*len(self.wordsHor)*len(self.wordsVer)
         )
     def setSolution(self,solution):
@@ -497,11 +491,11 @@ if __name__=='__main__':
     parser.add_argument("input",type=str,
                         help="""Input words for the crossword puzzle. Each line has to be of one of the following forms:
 
-  \"<word>: <clue>\"                - a word and its corresponding clue
-  \"#<comment>\"                    - comment line; ignored
-  \"+<Solution>\"                   - the solution word or sentence
-  \"-<info>\"                       - info that is printed before clues
-  \"*<sequence of words>\"          - give a sentence to allow asking for single words in the sentence (no colons allowed). Write \"§\" in front of words that should be asked for (e.g. \"I am a §nice §human.\" allowes the question "I am a nice ???." with answer \"HUMAN\").
+  "<word>: <clue>"                - a word and its corresponding clue
+  "#<comment>"                    - comment line; ignored
+  "+<Solution>"                   - the solution word or sentence
+  "-<info>"                       - info that is printed before clues
+  "*<sequence of words>"          - give a sentence to allow asking for single words in the sentence (no colons allowed). Write "§" in front of words that should be asked for (e.g. "I am a §nice §human." allowes the question "I am a nice ???." with answer "HUMAN").
 
 Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatically converted to AE, OE, UE, SS, respectively.
 """)
@@ -521,6 +515,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Does not write anything on the console.")
     parser.add_argument("--english","-en",action="store_true",
                         help="Changes language of output to english (default german).")
+    parser.add_argument("--seed", "-s", type=int, default=None,
+                        help="Specify a seed to make the puzzle creation deterministic.")
     args = parser.parse_args()
 
         
@@ -530,9 +526,11 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     if args.title == None:
         args.title = "Crossword Puzzle" if args.english else "Kreuzworträtsel"
 
-    f = open(args.input,"r")
-    lines = f.readlines()
-    f.close()
+    with open(args.input, "r") as f:
+        lines = f.readlines()
+
+    if args.seed is not None:
+        random.seed(args.seed)
     
     solutions = []
     wordnum = 0 # words without sentences
@@ -599,7 +597,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("#words: "+str(c.numWords()))
         print("given:  "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Time:   "+str(t1-t0)[:5] + " s")
-    f = open(args.output,"w")
-    print(latex(c,args.title,args.subtitle,info),file=f)
-    f.close()
-    
+
+    with open(args.output,"w") as f:
+        print(latex(c,args.title,args.subtitle,info),file=f)
