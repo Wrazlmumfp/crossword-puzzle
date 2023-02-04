@@ -495,11 +495,11 @@ if __name__=='__main__':
     parser.add_argument("input",type=str,
                         help="""Input words for the crossword puzzle. Each line has to be of one of the following forms:
 
-  \"<word>: <clue>\"                - a word and its corresponding clue
-  \"#<comment>\"                    - comment line; ignored
-  \"+<Solution>\"                   - the solution word or sentence
-  \"-<info>\"                       - info that is printed before clues
-  \"*<sequence of words>\"          - give a sentence to allow asking for single words in the sentence (no colons allowed). Write \"§\" in front of words that should be asked for (e.g. \"I am a §nice §human.\" allowes the question "I am a nice ???." with answer \"HUMAN\").
+  "<word>: <clue>"                - a word and its corresponding clue
+  "#<comment>"                    - comment line; ignored
+  "+<Solution>"                   - the solution word or sentence
+  "-<info>"                       - info that is printed before clues
+  "*<sequence of words>"          - give a sentence to allow asking for single words in the sentence (no colons allowed). Write "§" in front of words that should be asked for (e.g. "I am a §nice §human." allowes the question "I am a nice ???." with answer "HUMAN").
 
 Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatically converted to AE, OE, UE, SS, respectively.
 """)
