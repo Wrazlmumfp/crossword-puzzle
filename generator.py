@@ -342,7 +342,6 @@ def printPuzzleDefs():
 
 def printHeader(title,subtitle):
     return r"""
-\thispagestyle{empty} % No Header and page number at first page
 \begin{center}
   {\LARGE\textbf{"""+title+r"""}} \\
   {\textbf{"""+subtitle+r"""}} \\
@@ -421,14 +420,21 @@ def printPreamble():
 \usepackage{xcolor}                     % For gray cells
 \usepackage{pdflscape}                  % landscape
 \usepackage{ragged2e}                   % left align of text
+\usepackage{fancyhdr}                   % header
 \usepackage{multicol}
 \usepackage{tikz}
 
+% small 3-digit hex number at top left to match puzzle with clues
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0pt} % no ruler
+\fancyhead[L]{\scriptsize\color{darkgray} """+hex(random.randint(0,4095))[2:].upper()+r"""}
+
+% shortcuts for crossword puzzle
 \newcommand{\cwNumText}[2]{\tikz[overlay]{\filldraw[white] (0,0) rectangle (0.62,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
 \newcommand{\cwShortNumText}[2]{\tikz[overlay]{\filldraw[white] (0,0) rectangle (0.31,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
 \newcommand{\cwText}[1]{\tikz[overlay]{\node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#1};}}
 
-% some shortcuts
+% some other shortcuts
 \newcommand{\Nat}{\mathbb{N}}
 \newcommand{\Integ}{\mathbb{Z}}
 \newcommand{\Real}{\mathbb{R}}
