@@ -226,9 +226,9 @@ class crossword:
             return (0,0)
         # (many intersections, few columns, few rows, wordsHor/wordsVer balanced)
         return (
-            3*self.numIntersections(), \
-            self.numWords()**2*1/self.numCols(), \
-            self.numWords()**2*1/self.numRows(), \
+            3*self.numIntersections(),
+            self.numWords()**2*1/self.numCols(),
+            self.numWords()**2*1/self.numRows(),
             1/8*len(self.wordsHor)*len(self.wordsVer)
         )
     def setSolution(self,solution):
