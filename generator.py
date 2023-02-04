@@ -7,23 +7,19 @@ import string
 
 
 class crossword:
-    letters = dict()      # letters[(1,5)] == "R"
-    wordsHor = dict()     # wordsHor[(6,4)] == "WORD"
-    wordsVer = dict()     # wordsVer[(7,1)] == "WORD"
-    clues = dict()        # clues["WORD"] == "Some word."
-    intersections = set() # set of all coordinates where two words intersect
-    solutionDict = dict() # solutionDict[(1,5)] == "B"  (where "B" is the index of the letter at (1,5) in the solution, NOT the letter at position (1,5))
-    solution = None       # solution
-    xMin = 0
-    xMax = 0
-    yMin = 0
-    yMax = 0
     def __init__(self):
+        # letters[(1,5)] == "R"
         self.letters = dict()
+        # wordsHor[(6,4)] == "WORD"
         self.wordsHor = dict()
+        # wordsVer[(7,1)] == "WORD"
         self.wordsVer = dict()
+        # clues["WORD"] == "Some word."
         self.clues = dict()
+        # set of all coordinates where two words intersect
         self.intersections = set()
+        # solutionDict[(1,5)] == "B"
+        # where "B" is the index of the letter at (1,5) in the solution, NOT the letter at position (1,5)
         self.solutionDict = dict()
         self.solution = None
         self.xMin = 0
