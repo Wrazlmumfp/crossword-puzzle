@@ -75,9 +75,9 @@ class crossword:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][o]{"+self.get(d)+"}"
             else:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "{"+self.get(d)+"}"
-        wordsHor_sorted = list(self.wordsHor.keys()).copy()
+        wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
-        wordsVer_sorted = list(self.wordsVer.keys()).copy()
+        wordsVer_sorted = list(self.wordsVer.keys())
         wordsVer_sorted.sort(key=lambda x: x[0])
         words_sorted = wordsHor_sorted + wordsVer_sorted # note: not words, but coordinates to words!
         words_bothHorVer = [c for c in wordsHor_sorted if c in wordsVer_sorted]
@@ -102,9 +102,9 @@ class crossword:
         return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
-        wordsHor_sorted = list(self.wordsHor.keys()).copy()
+        wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
-        wordsVer_sorted = list(self.wordsVer.keys()).copy()
+        wordsVer_sorted = list(self.wordsVer.keys())
         wordsVer_sorted.sort(key=lambda x: x[0])
         hor = "{\\Large \\textbf{Horizontal}}\n" \
             +"\\begin{multicols}{2}\n" \
