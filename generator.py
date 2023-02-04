@@ -559,7 +559,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             wordDict[makeCrossword(line[0])] = ": ".join(line[1:]).replace("\n","")
             wordnum += 1
 
-    print(solutions)
                 
     t0 = time.time()
     best = crossword()
