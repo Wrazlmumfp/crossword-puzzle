@@ -141,24 +141,20 @@ class crossword:
         self.clues[word] = clue
         if hor:
             self.wordsHor[x,y]=word
-            self.xMin = min(self.xMin,x)
-            self.xMax = max(self.xMax,x+len(word)-1)
-            self.yMin = min(self.yMin,y)
-            self.yMax = max(self.yMax,y)
             for k in range(len(word)):
                 if (x+k,y) in self.letters.keys():
                     self.intersections.add((x+k,y))
                 self.set(x+k,y,word[k])
         else:
             self.wordsVer[x,y]=word
-            self.xMin = min(self.xMin,x)
-            self.xMax = max(self.xMax,x)
-            self.yMin = min(self.yMin,y-len(word)+1)
-            self.yMax = max(self.yMax,y)
             for k in range(len(word)):
                 if (x,y-k) in self.letters.keys():
                     self.intersections.add((x,y-k))
                 self.set(x,y-k,word[k])
+        self.xMin = min(self.xMin,x)
+        self.yMin = min(self.yMin,y) if hor else min(self.yMin,y-len(word)+1)
+        self.xMax = max(self.xMax,x+len(word)-1) if hor else max(self.xMax,x)
+        self.yMax = max(self.yMax,y)
         return
     def isAddable(self,word,x,y,hor=True):
         """Throws an error if word can not be added"""
@@ -298,13 +294,13 @@ class crossword:
             laidAside = []
         #print("added in order: " + str(added))
         return c
-        
+
 
 
 alphabet = list(string.ascii_uppercase)+list(string.ascii_lowercase)+list("0123456789")
 
 # replaces ä by ae and so on
-def makeCrossword(word):
+def convertWord(word):
     return word.upper().replace("Ä","AE").replace("Ö","OE").replace("Ü","UE").replace("ß","SS")
 
 
@@ -544,7 +540,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         # solution line
         elif line[0] == "+":
             line = line[2:] if line[1] == " " else line[1:]
-            solutions.append(makeCrossword(line.replace("\n","")))
+            solutions.append(convertWord(line.replace("\n","")))
         # info line
         elif line[0] == "-":
             info.append(line[1:])
@@ -554,13 +550,13 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             #clue = r"``\textit{"+line.replace("§","").replace("\n","")+"}''"
             clue=line[1:].replace("§","").replace("\n","")
             for w in sentenceWords:
-                keyword = makeCrossword(w)
+                keyword = convertWord(w)
                 wordDict[keyword] = clue.replace(w,"???")
-                sentenceDict[keyword] = [makeCrossword(word) for word in sentenceWords]
+                sentenceDict[keyword] = [convertWord(word) for word in sentenceWords]
         # normal "word: clue" line
         elif ": " in line:
             line = line.split(": ")
-            wordDict[makeCrossword(line[0])] = ": ".join(line[1:]).replace("\n","")
+            wordDict[convertWord(line[0])] = ": ".join(line[1:]).replace("\n","")
             wordnum += 1
 
                 
