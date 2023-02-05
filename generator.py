@@ -26,6 +26,8 @@ class crossword:
         self.xMax = 0
         self.yMin = 0
         self.yMax = 0
+        # undirected graph with letter coordinates as nodes and neighbouring letters as edges
+        self.graph = graph()
     def __getitem__(self,i):
         return self.get(i)
     def get(self,x,y=None):
@@ -49,6 +51,8 @@ class crossword:
         return len(self.wordsHor)+len(self.wordsVer)
     def numIntersections(self):
         return len(self.intersections)
+    def numCycles(self):
+        return self.graph.numCycles()
     def __str__(self):
         n = self.numRows()
         m = self.numCols()
@@ -133,6 +137,7 @@ class crossword:
         other.xMax = self.xMax
         other.yMin = self.yMin
         other.yMax = self.yMax
+        other.graph = self.graph.copy()
         return other
     def add(self,word,x,y,hor=True,clue=None):
         """Adds word to self, first letter at position (x=col,y=row); hor is a bool whether word is inserted horicontal or vertical"""
@@ -141,20 +146,21 @@ class crossword:
         self.clues[word] = clue
         if hor:
             self.wordsHor[x,y]=word
-            for k in range(len(word)):
-                if (x+k,y) in self.letters.keys():
-                    self.intersections.add((x+k,y))
-                self.set(x+k,y,word[k])
         else:
             self.wordsVer[x,y]=word
-            for k in range(len(word)):
-                if (x,y-k) in self.letters.keys():
-                    self.intersections.add((x,y-k))
-                self.set(x,y-k,word[k])
         self.xMin = min(self.xMin,x)
         self.yMin = min(self.yMin,y) if hor else min(self.yMin,y-len(word)+1)
         self.xMax = max(self.xMax,x+len(word)-1) if hor else max(self.xMax,x)
         self.yMax = max(self.yMax,y)
+        for k,l in enumerate(word):
+            coord = (x+k,y) if hor else (x,y-k)
+            prev = (x+k-1,y) if hor else (x,y-k+1) # coordinate before coord
+            if coord in self.letters.keys():
+                self.intersections.add(coord)
+            self.set(coord[0],coord[1],l)
+            self.graph.add_node(coord)
+            if k > 0:
+                self.graph.add_edge(prev,coord)
         return
     def isAddable(self,word,x,y,hor=True):
         """Throws an error if word can not be added"""
@@ -212,7 +218,8 @@ class crossword:
                     possibleCoordinates.add( (x,y+k,False) )
         return possibleCoordinates
     def score(self,maxSizeX=None,maxSizeY=None):
-        return sum(self.scores(maxSizeX,maxSizeY))
+        # euclidean norm
+        return np.sqrt(sum([s**2 for s in self.scores(maxSizeX,maxSizeY)]))
     def scores(self,maxSizeX=None,maxSizeY=None):
         if self.numWords() == 0:
             return (0,0)
@@ -220,8 +227,9 @@ class crossword:
             return (0,0)
         if maxSizeY != None and self.numRows() > maxSizeY:
             return (0,0)
-        # (many intersections, few columns, few rows, wordsHor/wordsVer balanced)
+        # (many cycles, many intersections, few columns, few rows, wordsHor/wordsVer balanced)
         return (
+            1/4*self.numWords()*self.numCycles(),
             3*self.numIntersections(),
             self.numWords()**2*1/self.numCols(),
             self.numWords()**2*1/self.numRows(),
@@ -294,6 +302,63 @@ class crossword:
             laidAside = []
         #print("added in order: " + str(added))
         return c
+    
+
+    
+class graph:
+    # undirected graph
+    def __init__(self):
+        # nodes should be set of tuples (coordinates), edges set of frozensets of tuples
+        self.nodes = set()
+        self.edges = set()
+        # important for graph.numCycles()
+        self.parent = dict()
+        self.color = dict()
+        self.cycleNumber = None
+    def __str__(self):
+        return "Graph("+str(self.nodes)+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
+    def __repr__(self):
+        return str(self)
+    def add_node(self,node):
+        self.nodes.add(node)
+    def add_edge(self,node1,node2):
+        self.edges.add( frozenset([node1, node2]) )
+    def copy(self):
+        other = graph()
+        other.nodes = self.nodes.copy()
+        other.edges = self.edges.copy()
+        return other
+    def neighbours(self,node):
+        return {list(edge-{node})[0] for edge in self.edges if node in edge}
+    def numCycles(self):
+        # for details about the algorithms, see https://www.codingninjas.com/codestudio/library/count-of-simple-cycles-in-a-connected-undirected-graph-having-n-vertices
+        self.cycleNumber = 0
+        for v in self.nodes:
+            self.color[v] = None
+            self.parent[v] = None
+        # (0,0) is the start node; should be in any graph handled here
+        self.DFSCycle((0,0),0)
+        return self.cycleNumber
+    def DFSCycle(self,u,p):
+        # u is the currently visited node, p its parent we are coming from
+        # the node is already considered
+        if self.color[u] == 2:
+            return
+        # partially visited node found i.e new cycle found
+        if self.color[u] == 1:
+            self.cycleNumber += 1
+            return
+        # storing parent of u
+        self.parent[u] = p
+        # marking as partially visited
+        self.color[u] = 1
+        for v in self.neighbours(u):
+            if v == self.parent[u]:
+                continue
+            self.DFSCycle(v, u)
+        # marking as fully visited
+        self.color[u] = 2
+        return
 
 
 
@@ -587,12 +652,13 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         
     if not(args.quiet):
         print(c)
-        print("scores: "+str(c.scores()))
-        print("score:  "+str(c.score())[:7])
-        print("size:   "+str(c.numCols())+"x"+str(c.numRows()))
-        print("#words: "+str(c.numWords()))
-        print("given:  "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
-        print("Time:   "+str(t1-t0)[:5] + " s")
+        print("scores:  "+str(c.scores()))
+        print("score:   "+str(c.score())[:7])
+        print("size:    "+str(c.numCols())+"x"+str(c.numRows()))
+        print("#words:  "+str(c.numWords()))
+        print("#cycles: "+str(c.numCycles()))
+        print("given:   "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
+        print("Time:    "+str(t1-t0)[:5] + " s")
 
     with open(args.output,"w") as f:
         print(latex(c,args.title,args.subtitle,info),file=f)
