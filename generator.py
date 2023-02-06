@@ -4,6 +4,7 @@ import numpy as np
 import random
 import time
 import string
+import copy
 
 
 class crossword:
@@ -315,21 +316,50 @@ class graph:
         self.parent = dict()
         self.color = dict()
         self.cycleNumber = None
+        # dictionary storing all neighbours of nodes
+        self.neighbours = dict()
     def __str__(self):
-        return "Graph("+str(self.nodes)+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
+        return "graph("+str(self.nodes)+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
     def __repr__(self):
         return str(self)
     def add_node(self,node):
-        self.nodes.add(node)
+        if not(node in self.nodes):
+            self.nodes.add(node)
+            self.neighbours[node] = set()
+    def extend_nodes(self,L):
+        for l in L:
+            self.add_node(l)
+    def remove_node(self,node):
+        self.nodes.discard(node)
+        del self.neighbours[node]
+    def remove_nodes(self,L):
+        for node in L:
+            self.remove_node(node)
     def add_edge(self,node1,node2):
         self.edges.add( frozenset([node1, node2]) )
+        self.neighbours[node1].add(node2)
+        self.neighbours[node2].add(node1)
+    def extend_edges(self,L):
+        for node1,node2 in L:
+            self.add_edge(node1,node2)
+    def remove_edge(self,node1,node2):
+        self.edges.discard( frozenset([node1, node2]) )
+        self.neighbours[node1].discard(node2)
+        self.neighbours[node2].discard(node1)
+    def remove_edges(self,L):
+        for node1,node2 in L:
+            self.remove_edge(node1,node2)
     def copy(self):
         other = graph()
         other.nodes = self.nodes.copy()
         other.edges = self.edges.copy()
+        other.neighbours = {node: self.neighbours[node].copy() for node in self.nodes}
+        other.parent = dict()
+        other.color = dict()
+        other.cycleNumber = None
         return other
-    def neighbours(self,node):
-        return {list(edge-{node})[0] for edge in self.edges if node in edge}
+    def getNeighbours(self,u):
+        return {v for v in self.nodes if frozenset([u,v]) in self.edges}
     def numCycles(self):
         # for details about the algorithms, see https://www.codingninjas.com/codestudio/library/count-of-simple-cycles-in-a-connected-undirected-graph-having-n-vertices
         self.cycleNumber = 0
@@ -352,7 +382,7 @@ class graph:
         self.parent[u] = p
         # marking as partially visited
         self.color[u] = 1
-        for v in self.neighbours(u):
+        for v in self.neighbours[u]:
             if v == self.parent[u]:
                 continue
             self.DFSCycle(v, u)
@@ -658,6 +688,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("#words:  "+str(c.numWords()))
         print("#cycles: "+str(c.numCycles()))
         print("given:   "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
+        print("Sol:     "+str(solution))
         print("Time:    "+str(t1-t0)[:5] + " s")
 
     with open(args.output,"w") as f:
