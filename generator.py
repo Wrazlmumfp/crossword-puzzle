@@ -53,7 +53,11 @@ class crossword:
     def numIntersections(self):
         return len(self.intersections)
     def numCycles(self):
-        return self.graph.numCycles()
+        global args
+        if not(args.cycles):
+            return 0
+        else:
+            return self.graph.numCycles()
     def __str__(self):
         n = self.numRows()
         m = self.numCols()
@@ -126,6 +130,7 @@ class crossword:
         return  "\\begin{multicols}{2}\n" + hor + "\n\n\\columnbreak\n\n" + ver + "\n\\end{multicols}\n"
     def copy(self):
         """Returns a copy of self."""
+        global args
         other = crossword()
         other.letters = self.letters.copy()
         other.wordsHor = self.wordsHor.copy()
@@ -138,11 +143,13 @@ class crossword:
         other.xMax = self.xMax
         other.yMin = self.yMin
         other.yMax = self.yMax
-        other.graph = self.graph.copy()
+        if args.cycles:
+            other.graph = self.graph.copy()
         return other
     def add(self,word,x,y,hor=True,clue=None):
         """Adds word to self, first letter at position (x=col,y=row); hor is a bool whether word is inserted horicontal or vertical"""
         """Does not check whether word is addable (use self.isAddable before call if necessary)"""
+        global args
         word = word.upper()
         self.clues[word] = clue
         if hor:
@@ -159,6 +166,8 @@ class crossword:
             if coord in self.letters.keys():
                 self.intersections.add(coord)
             self.set(coord[0],coord[1],l)
+            if not(args.cycles):
+                continue
             self.graph.add_node(coord)
             if k > 0:
                 self.graph.add_edge(prev,coord)
@@ -600,6 +609,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Subtitle of the puzzle.")
     parser.add_argument("--iterations","-it",type=int,default=100,
                         help="Number of iterations (higher number = possible better puzzle).")
+    parser.add_argument("--cycles",action="store_true",
+                        help="Searches for cycles. Slows down computation by ~20%.")
     parser.add_argument("--output","-o",type=str,default=None,
                         help="Path to the output file; can be compiled using LaTeX.")
     parser.add_argument("--quiet","-q",action="store_true",
@@ -686,7 +697,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("score:   "+str(c.score())[:7])
         print("size:    "+str(c.numCols())+"x"+str(c.numRows()))
         print("#words:  "+str(c.numWords()))
-        print("#cycles: "+str(c.numCycles()))
+        if args.cycles:
+            print("#cycles: "+str(c.numCycles()))
         print("given:   "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Sol:     "+str(solution))
         print("Time:    "+str(t1-t0)[:5] + " s")
