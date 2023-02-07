@@ -521,7 +521,7 @@ def printPreamble():
 % small 3-digit hex number at top left to match puzzle with clues
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0pt} % no ruler
-\fancyhead[L]{\scriptsize\color{darkgray} """+hex(random.randint(0,4095))[2:].upper()+r"""}
+\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed)[2:].upper()+r"""}
 
 % shortcuts for crossword puzzle
 \newcommand{\cwNumText}[2]{\tikz[overlay]{\filldraw[white] (0,0) rectangle (0.62,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
@@ -617,13 +617,14 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Does not write anything on the console.")
     parser.add_argument("--english","-en",action="store_true",
                         help="Changes language of output to english (default german).")
-    parser.add_argument("--seed", "-s", type=int, default=None,
+    parser.add_argument("--seed", "-s", type=int, default=random.randint(0,4095),
                         help="Specify a seed to make the puzzle creation deterministic.")
     args = parser.parse_args()
 
         
     if args.output == None:
-        args.output = "".join(args.input.split(".")[:-1])+"_cwpuzzle.tex" if "." in args.input else args.input+"_cwpuzzle.tex"
+        ext = "_cwpuzzle_"+hex(args.seed)[2:].upper()+".tex"
+        args.output = "".join(args.input.split(".")[:-1])+ext if "." in args.input else args.input+ext
 
     if args.title == None:
         args.title = "Crossword Puzzle" if args.english else "Kreuzworträtsel"
@@ -631,8 +632,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     with open(args.input, "r") as f:
         lines = f.readlines()
 
-    if args.seed is not None:
-        random.seed(args.seed)
+    random.seed(args.seed)
     
     solutions = []
     wordnum = 0 # words without sentences
