@@ -81,9 +81,9 @@ class crossword:
         # insert letters
         for d in self.letters.keys():
             if d in self.solutionDict.keys():
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][o]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][gfo]{"+self.get(d)+"}"
             else:
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "[][gf]{"+self.get(d)+"}"
         wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
         wordsVer_sorted = list(self.wordsVer.keys())
@@ -96,18 +96,18 @@ class crossword:
             if d in self.solutionDict.keys():
                 # overwrites previously written letter
                 # e.g. [\cwNumText{21/42}{B}][o]{N}
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwNumText{"+str(indices[0]+1)+"/"+str(indices[1]+1)+"}{"+str(self.solutionDict[d])+"}][o]"+"{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwNumText{"+str(indices[0]+1)+"/"+str(indices[1]+1)+"}{"+str(self.solutionDict[d])+"}][ogf]"+"{"+self.get(d)+"}"
             else:
                 # e.g. [\cwNum{42}][B]
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(indices[0]+1)+"/"+str(indices[1]+1)+"]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(indices[0]+1)+"/"+str(indices[1]+1)+"][gf]{"+self.get(d)+"}"
         # insert all other word numbers
         for i,d in enumerate(words_sorted):
             if d in words_bothHorVer:
                 continue
             if d in self.solutionDict.keys():
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwShortNumText{"+str(i+1)+"}{"+str(self.solutionDict[d])+"}][o]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwShortNumText{"+str(i+1)+"}{"+str(self.solutionDict[d])+"}][gfo]{"+self.get(d)+"}"
             else:
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(i+1)+"]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(i+1)+"][gf]{"+self.get(d)+"}"
         return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
@@ -428,8 +428,7 @@ def latex(c,title,subtitle,info):
 
 def printPuzzleDefs():
     return r"""
-\definecolor{gray}{gray}{.9}
-\PuzzleDefineColorCell{g}{gray}                 % g option for cells
+\PuzzleDefineColorCell{g}{cellcolor}            % g option for gray cells
 \def\PuzzleNumberFont{\rmfamily\size{6}}        % size of small numbers and letters in the corners
 \def\PuzzleSolutionContent#1{\makebox(1,1){#1}} % no automatic uppercase in solution
 %\PuzzleSolution                                 % show solution"""
@@ -480,7 +479,7 @@ def printSolution(solution):
             ("|[\\cwText{"
              + solution_alphabet[i+sum([len(sol_part)+1
                                        for sol_part in splittedSolution[:k]])]
-             + "}][o]" + s)
+             + "}][gfo]" + s)
             if s!=" "
             else "|{}"
             for i,s in enumerate(solution_part)
@@ -493,6 +492,11 @@ def printSolution(solution):
 
 
 def printPreamble():
+    global args
+    if args.nogray:
+        cell_color = "1"
+    else:
+        cell_color = ".95"
     return r"""
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%   Preamble   %%%%%%%%%%%%%%%%%%%
@@ -524,9 +528,10 @@ def printPreamble():
 \fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed)[2:].upper()+r"""}
 
 % shortcuts for crossword puzzle
-\newcommand{\cwNumText}[2]{\tikz[overlay]{\filldraw[white] (0,0) rectangle (0.62,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
-\newcommand{\cwShortNumText}[2]{\tikz[overlay]{\filldraw[white] (0,0) rectangle (0.31,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
-\newcommand{\cwText}[1]{\tikz[overlay]{\node[circle,fill=white] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#1};}}
+\definecolor{cellcolor}{gray}{"""+cell_color+r"""} % background color of cells
+\newcommand{\cwNumText}[2]{\tikz[overlay]{\filldraw[cellcolor] (0,0) rectangle (0.62,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=cellcolor] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
+\newcommand{\cwShortNumText}[2]{\tikz[overlay]{\filldraw[cellcolor] (0,0) rectangle (0.31,-0.2); \node[right] at (-0.1,-0.1) {#1}; \node[circle,fill=cellcolor] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#2};}}
+\newcommand{\cwText}[1]{\tikz[overlay]{\node[circle,fill=cellcolor] at (0.53,-0.53) {}; \node at (0.53,-0.53) {#1};}}
 
 % some other shortcuts
 \newcommand{\Nat}{\mathbb{N}}
@@ -617,6 +622,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Does not write anything on the console.")
     parser.add_argument("--english","-en",action="store_true",
                         help="Changes language of output to english (default german).")
+    parser.add_argument("--nogray",action="store_true",
+                        help="Sets background of cells to white instead of gray.")
     parser.add_argument("--seed", "-s", type=int, default=random.randint(0,4095),
                         help="Specify a seed to make the puzzle creation deterministic.")
     args = parser.parse_args()
@@ -693,15 +700,17 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         
     if not(args.quiet):
         print(c)
-        print("scores:  "+str(c.scores()))
-        print("score:   "+str(c.score())[:7])
-        print("size:    "+str(c.numCols())+"x"+str(c.numRows()))
-        print("#words:  "+str(c.numWords()))
+        print("scores:     "+str(c.scores()))
+        print("score:      "+str(c.score())[:7])
+        print("size:       "+str(c.numCols())+"x"+str(c.numRows()))
+        print("#words:     "+str(c.numWords()))
         if args.cycles:
-            print("#cycles: "+str(c.numCycles()))
-        print("given:   "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
-        print("Sol:     "+str(solution))
-        print("Time:    "+str(t1-t0)[:5] + " s")
+            print("#cycles:    "+str(c.numCycles()))
+        print("given:      "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
+        print("Sol:        "+str(solution))
+        print("Seed (hex): "+str(hex(args.seed)[2:].upper()))
+        print("Seed (int): "+str(args.seed))
+        print("Time:       "+str(t1-t0)[:5] + " s")
 
     with open(args.output,"w") as f:
         print(latex(c,args.title,args.subtitle,info),file=f)
