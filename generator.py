@@ -245,6 +245,51 @@ class crossword:
             self.numWords()**2*1/self.numRows(),
             1/8*len(self.wordsHor)*len(self.wordsVer)
         )
+    def scoreIfAdded(self,word,x,y,hor=True,maxSizeX=None,maxSizeY=None):
+        # euclidean norm
+        return np.sqrt(sum([s**2 for s in self.scoresIfAdded(word,x,y,hor,maxSizeX,maxSizeY)]))
+    def scoresIfAdded(self,word,x,y,hor=True,maxSizeX=None,maxSizeY=None):
+        numWords_new = self.numWords()+1
+        xMin_new = min(self.xMin,x)
+        yMin_new = min(self.yMin,y) if hor else min(self.yMin,y-len(word)+1)
+        xMax_new = max(self.xMax,x+len(word)-1) if hor else max(self.xMax,x)
+        yMax_new = max(self.yMax,y)
+        numCols_new = xMax_new-xMin_new+1
+        numRows_new = yMax_new-yMin_new+1
+        if maxSizeX != None and numCols_new > maxSizeX:
+            return (0,0)
+        if maxSizeY != None and numRows_new > maxSizeY:
+            return (0,0)
+        numWordsHor_new = len(self.wordsHor)+1 if hor else len(self.wordsHor)
+        numWordsVer_new = len(self.wordsVer) if hor else len(self.wordsVer)+1
+        numIntersections_new = self.numIntersections()
+        numCycles_new = 0
+        nodes_added = []
+        edges_added = []
+        for k,l in enumerate(word):
+            coord = (x+k,y) if hor else (x,y-k)
+            prev = (x+k-1,y) if hor else (x,y-k+1) # coordinate before coord
+            if coord in self.letters.keys():
+                numIntersections_new += 1
+            elif args.cycles:
+                nodes_added.append(coord)
+            if not(args.cycles):
+                continue
+            self.graph.add_node(coord)
+            if k > 0:
+                self.graph.add_edge(prev,coord)
+                edges_added.append((prev,coord))
+        if args.cycles:
+            numCycles_new = self.numCycles()
+            self.graph.remove_edges(edges_added)
+            self.graph.remove_nodes(nodes_added)
+        return (
+            1/4*numWords_new*numCycles_new,
+            3*numIntersections_new,
+            numWords_new**2*1/numCols_new,
+            numWords_new**2*1/numRows_new,
+            1/8*numWordsHor_new*numWordsVer_new
+        )
     def setSolution(self,solution):
         global alphabet
         global args
@@ -290,24 +335,23 @@ class crossword:
                 w = random.choices(words,[np.log(len(wort)+1) for wort in words])[0]
                 words.remove(w)
                 coords = c.whereIsAddable(w)
-                # newCWs is list of tuples (new crossword, word added to this new crossword)
-                newCWs = list()
+                scoreDict = dict()
                 for coord in coords:
-                    cNew = c.copy()
-                    cNew.add(w,coord[0],coord[1],coord[2],wordDict[w])
-                    if cNew.score(maxSizeX,maxSizeY) > 0:
-                        newCWs.append((cNew,w,coord))
-                if len(newCWs) == 0:
+                    s = c.scoreIfAdded(w,coord[0],coord[1],coord[2],maxSizeX,maxSizeY)
+                    if s > 0:
+                        scoreDict[coord] = s
+                coords = list(scoreDict.keys())
+                if len(coords) == 0:
                     laidAside.append(w)
                     continue
                 sthChanged = True
                 if w in sentenceDict.keys():
                     laidAside = [word for word in laidAside if not(word in sentenceDict[w])]
                     words = [word for word in words if not(word in sentenceDict[w])]
-                newCWs.sort(key=lambda x: x[0].score(maxSizeX,maxSizeY))
-                newCW = random.choices(newCWs,range(1,len(newCWs)+1))[0]
-                c = newCW[0]
-                added.append(newCW[1:])
+                coords.sort(key=lambda c: scoreDict[c])
+                chosenCoord = random.choices(coords,range(1,len(coords)+1))[0]
+                c.add(w,chosenCoord[0],chosenCoord[1],chosenCoord[2],wordDict[w])
+                added.append((w,chosenCoord))
             words = laidAside
             laidAside = []
         #print("added in order: " + str(added))
