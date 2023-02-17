@@ -215,6 +215,29 @@ class crossword:
             #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as there is a new letter after its end.")
             return False
         return True
+    def isAddable2(self,word,x,y,hor=True):
+        """Less efficient but more elegant version of isAddable"""
+        word = word.upper()
+        relevantKeys = self.letters.keys()
+        wordDict = self.wordsHor if hor else self.wordsVer
+        nextCoord = (x+len(word),y) if hor else (x,y-len(word))
+        prevCoord = (x-1,y) if hor else (x,y+1)
+        try:
+            next(k for k,l in enumerate(word) \
+                 if (coords := (x+k,y) if hor else (x,y-k)) \
+                 and (left := (x+k,y+1) if hor else (x+1,y-k)) \
+                 and (right := (x+k,y-1) if hor else (x-1,y-k)) \
+                 and (not(self.get(coords) in {l," "}) \
+                      or (not(self.get(coords) == l) and {self.get(left),self.get(right)} != {" "}) \
+                      or (coords in self.intersections) \
+                      or (coords in wordDict.keys()) \
+                      or (hor and k < len(word)) and (((x+k,y+1) in relevantKeys and (x+k+1,y+1) in relevantKeys) or ((x+k,y-1) in relevantKeys and (x+k+1,y-1) in relevantKeys)) \
+                      or (not(hor) and k < len(word)) and (((x+1,y-k) in relevantKeys and (x+1,y-k-1) in relevantKeys) or ((x-1,y-k) in relevantKeys and (x-1,y-k-1) in relevantKeys)) \
+                      ) \
+                 )
+        except StopIteration:
+            return not(nextCoord in relevantKeys or prevCoord in relevantKeys)
+        return False
     def whereIsAddable(self,word):
         word=word.upper()
         possibleCoordinates = set()
