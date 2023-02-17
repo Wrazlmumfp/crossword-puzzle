@@ -173,7 +173,7 @@ class crossword:
                 self.graph.add_edge(prev,coord)
         return
     def isAddable(self,word,x,y,hor=True):
-        """Throws an error if word can not be added"""
+        """Checks whether a given word can be added at position x,y"""
         word = word.upper()
         relevantKeys = self.letters.keys()
         for k in range(len(word)):
@@ -182,39 +182,39 @@ class crossword:
             right = (x+k,y-1) if hor else (x-1,y-k)
             # checks whether letter would overwrite other letter
             if not(self.get(coords) in {word[k]," "}):
-                raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because of letter "+self.get(coords)+" instead of "+word[k]+" at position "+str(coords)+".")
+                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because of letter "+self.get(coords)+" instead of "+word[k]+" at position "+str(coords)+".")
+                return False
             # checks whether neighbouring positions are only letters of intersections words
             if not(self.get(coords) == word[k]) and {self.get(left),self.get(right)} != {" "}:
-                raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because it would neighbour other word.")
+                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because it would neighbour other word.")
+                return False
             # checks whether position is already taken by two words
             if coords in self.intersections:
-                raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because already two words intersect in letter "+str(word[k])+" at position "+str((x+k,y)))
+                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because already two words intersect in letter "+str(word[k])+" at position "+str((x+k,y)))
+                return False
             # checks whether letter is not beginning of other word
             wordDict = self.wordsHor if hor else self.wordsVer
             if coords in wordDict.keys():
-                raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would intersect with word "+wordDict[coords]+" at position "+str(coords)+".")
+                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would intersect with word "+wordDict[coords]+" at position "+str(coords)+".")
+                return False
             # checks whether word runs parallel to other word
             if hor and k < len(word):
                 if ((x+k,y+1) in relevantKeys and (x+k+1,y+1) in relevantKeys)\
                    or ((x+k,y-1) in relevantKeys and (x+k+1,y-1) in relevantKeys):
-                    raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
+                    #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
+                    return False
             elif not(hor) and k < len(word):
                 if ((x+1,y-k) in relevantKeys and (x+1,y-k-1) in relevantKeys)\
                    or ((x-1,y-k) in relevantKeys and (x-1,y-k-1) in relevantKeys):
-                    raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
+                    #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
+                    return False
         nextCoord = (x+len(word),y) if hor else (x,y-len(word))
         prevCoord = (x-1,y) if hor else (x,y+1)
         # checks whether there is a letter before or after the word
         if nextCoord in relevantKeys or prevCoord in relevantKeys:
-            raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as there is a new letter after its end.")
-        return
-    def isAddableBool(self,word,x,y,hor=True):
-        """Same as isAddable, but returns Boolean whether word can be added."""
-        try:
-            self.isAddable(word,x,y,hor)
-            return True
-        except:
+            #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as there is a new letter after its end.")
             return False
+        return True
     def whereIsAddable(self,word):
         word=word.upper()
         possibleCoordinates = set()
@@ -222,9 +222,9 @@ class crossword:
             l = word[k]
             coordinates = {j for j in self.letters.keys() if self.get(j) == l}
             for x,y in coordinates:
-                if self.isAddableBool(word,x-k,y,True):
+                if self.isAddable(word,x-k,y,True):
                     possibleCoordinates.add( (x-k,y,True) )
-                elif self.isAddableBool(word,x,y+k,False):
+                elif self.isAddable(word,x,y+k,False):
                     possibleCoordinates.add( (x,y+k,False) )
         return possibleCoordinates
     def score(self,maxSizeX=None,maxSizeY=None):
