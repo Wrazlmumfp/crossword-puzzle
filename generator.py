@@ -682,7 +682,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     parser.add_argument("--iterations","-it",type=int,default=100,
                         help="Number of iterations (higher number = possible better puzzle).")
     parser.add_argument("--cycles",action="store_true",
-                        help="Searches for cycles. Slows down computation by ~20%.")
+                        help="Searches for cycles. Slows down computation by ~20%%.")
     parser.add_argument("--output","-o",type=str,default=None,
                         help="Path to the output file; can be compiled using LaTeX.")
     parser.add_argument("--quiet","-q",action="store_true",
