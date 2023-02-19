@@ -853,5 +853,5 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("Time:       "+str(t1-t0)[:5] + " s")
 
     if not(args.no_output):
-        with open(args.output,"w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             print(latex(c,args.title,args.subtitle,info),file=f)
