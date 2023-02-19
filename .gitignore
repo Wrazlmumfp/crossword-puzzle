@@ -1,0 +1,28 @@
+# ignore input files except example
+*.txt
+!example.txt
+
+# ignore output
+*.tex
+*.pdf
+
+# latex auxiliary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+# Latex build tool auxiliary files
+*.fdb_latexmk
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.synctex.gz(busy)
+*.pdfsync
