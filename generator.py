@@ -54,7 +54,7 @@ class crossword:
         return len(self.intersections)
     def numCycles(self):
         global args
-        if not(args.cycles):
+        if args is not None and not(args.nocycles):
             return 0
         else:
             return self.graph.numCycles()
@@ -143,7 +143,7 @@ class crossword:
         other.xMax = self.xMax
         other.yMin = self.yMin
         other.yMax = self.yMax
-        if args.cycles:
+        if args is not None and args.nocycles:
             other.graph = self.graph.copy()
         return other
     def add(self,word,x,y,hor=True,clue=None):
@@ -166,7 +166,7 @@ class crossword:
             if coord in self.letters.keys():
                 self.intersections.add(coord)
             self.set(coord[0],coord[1],l)
-            if not(args.cycles):
+            if args is not None and not(args.nocycles):
                 continue
             self.graph.add_node(coord)
             if k > 0:
@@ -294,15 +294,15 @@ class crossword:
             prev = (x+k-1,y) if hor else (x,y-k+1) # coordinate before coord
             if coord in self.letters.keys():
                 numIntersections_new += 1
-            elif args.cycles:
+            if args is not None and args.nocycles:
                 nodes_added.append(coord)
-            if not(args.cycles):
+            else:
                 continue
             self.graph.add_node(coord)
             if k > 0:
                 self.graph.add_edge(prev,coord)
                 edges_added.append((prev,coord))
-        if args.cycles:
+        if args is not None and args.nocycles:
             numCycles_new = self.numCycles()
             self.graph.remove_edges(edges_added)
             self.graph.remove_nodes(nodes_added)
@@ -538,7 +538,7 @@ def printSolution(solution):
         else:
             solution_alphabet.append(alphabet[i])
             i += 1
-    sol="Solution" if args.english else "Lösung"
+    sol="Solution" if args is not None and args.english else "Lösung"
     return sol+""": \\par \\vspace{0.5cm}
 \\begin{Puzzle}{23}{"""+str(2*len(splittedSolution)-1)+"}\n" \
     + "|.\n|.\n".join([
@@ -560,7 +560,7 @@ def printSolution(solution):
 
 def printPreamble():
     global args
-    if args.nogray:
+    if args is not None and args.nogray:
         cell_color = "1"
     else:
         cell_color = ".95"
@@ -592,7 +592,7 @@ def printPreamble():
 % small 3-digit hex number at top left to match puzzle with clues
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0pt} % no ruler
-\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed)[2:].upper()+r"""}
+\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed if args is not None else "")[2:].upper()+r"""}
 
 % shortcuts for crossword puzzle
 \definecolor{cellcolor}{gray}{"""+cell_color+r"""} % background color of cells
@@ -658,6 +658,7 @@ def printPreamble():
 
 
 import argparse
+args = None # important if __name__ != '__main__'
 if __name__=='__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("input",type=str,
@@ -681,8 +682,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Subtitle of the puzzle.")
     parser.add_argument("--iterations","-it",type=int,default=100,
                         help="Number of iterations (higher number = possible better puzzle).")
-    parser.add_argument("--cycles",action="store_true",
-                        help="Searches for cycles. Slows down computation by ~20%%.")
+    parser.add_argument("--nocycles",action="store_true",
+                        help="Does not search for cycles (speeds up computation by ~20%%).")
     parser.add_argument("--output","-o",type=str,default=None,
                         help="Path to the output file; can be compiled using LaTeX.")
     parser.add_argument("--quiet","-q",action="store_true",
@@ -771,7 +772,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("score:      "+str(c.score())[:7])
         print("size:       "+str(c.numCols())+"x"+str(c.numRows()))
         print("#words:     "+str(c.numWords()))
-        if args.cycles:
+        if not(args.nocycles):
             print("#cycles:    "+str(c.numCycles()))
         print("given:      "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Sol:        "+str(solution))
