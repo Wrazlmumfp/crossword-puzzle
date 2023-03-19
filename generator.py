@@ -58,6 +58,10 @@ class crossword:
             return 0
         else:
             return self.graph.numCycles()
+    def __le__(self,other):
+        # checks if self is subset of other
+        return self.wordsHor.items() <= other.wordsHor.items() \
+            and self.wordsVer.items() <= other.wordsVer.items()
     def __str__(self):
         n = self.numRows()
         m = self.numCols()
