@@ -242,8 +242,11 @@ class crossword:
         except StopIteration:
             return not(nextCoord in relevantKeys or prevCoord in relevantKeys)
         return False
-    def whereIsAddable(self,word):
+    def whereIsAddable(self,word) -> set:
         word=word.upper()
+        if self.numWords() == 0:
+            return {(0,0,True)}
+            return {(0,0,False), (0,0,True)}
         possibleCoordinates = set()
         for k in range(len(word)):
             l = word[k]
@@ -382,7 +385,58 @@ class crossword:
             laidAside = []
         #print("added in order: " + str(added))
         return c
-    
+    def generate_bf(wordDict,stentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None,solutions=None):
+        allCWs = crossword.allCrosswords(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout)
+        if solutions is None:
+            return max(allCWs,key=lambda x: x.score())
+        else:
+            allCWsWithSol = [c for c in allCWs if any(c.setSolution(sol) for sol in solutions)]
+            if allCWsWithSol == []:
+                raise Exception("Could not produce puzzle with one of the given solutions.")
+            return max(allCWsWithSol,key=lambda x: x.score())
+    def allCrosswords(wordDict,sentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None):
+        """Returns a list of all crossword puzzles that can be created from wordDict with given sizes."""
+        global allCrosswords_iteration
+        global allCrosswords_set
+        global allCrosswords_start
+        allCrosswords_iteration = None
+        allCrosswords_set = set() # crosswords get stored in this set
+        allCrosswords_start = time.time()
+        c = crossword()
+        if iterations is not None:
+            allCrosswords_iteration = 0
+        c.allCrosswordsFromMe(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout)
+        return allCrosswords_set
+    def allCrosswordsFromMe(self,wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout):
+        """Helper function for crossword.allCrosswords()"""
+        global allCrosswords_iteration
+        global allCrosswords_set
+        global allCrosswords_start
+        if iterations is not None and allCrosswords_iteration >= iterations:
+            return
+        if timeout is not None and time.time()-allCrosswords_start >= timeout:
+            return
+        nothingAddable = True
+        for w in sorted(wordDict.keys(),reverse=True):
+            for coord in self.whereIsAddable(w):
+                if self.scoreIfAdded(w,coord[0],coord[1],coord[2],maxSizeX,maxSizeY) == 0:
+                    continue
+                nothingAddable = False
+                d = self.copy()
+                d.add(w,coord[0],coord[1],coord[2],wordDict[w])
+#                if any(d <= c for c in allCrosswords_set):
+#                    continue
+                wordDict_new = wordDict.copy()
+                del wordDict_new[w]
+                if w in sentenceDict.keys():
+                    for s in set(sentenceDict[w])-{w}:
+                        if s in wordDict_new: # s may already be deleted by another sentence
+                            del wordDict_new[s]
+                d.allCrosswordsFromMe(wordDict_new,sentenceDict,maxSizeX,maxSizeY,iterations,timeout)
+        if nothingAddable: # stays True iff no word could be added
+            if iterations is not None:
+                allCrosswords_iteration += 1
+            allCrosswords_set.add(self)
 
     
 class graph:
@@ -699,6 +753,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Sets background of cells to white instead of gray.")
     parser.add_argument("--seed", "-s", type=int, default=random.randint(0,4095),
                         help="Specify a seed to make the puzzle creation deterministic.")
+    parser.add_argument("--bruteforce","-bf",action="store_true",
+                        help="Computes puzzle by brute-force search.")
     args = parser.parse_args()
 
         
@@ -745,29 +801,35 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             wordDict[convertWord(line[0])] = ": ".join(line[1:]).replace("\n","")
             wordnum += 1
 
-                
+
     t0 = time.time()
     best = crossword()
     random.shuffle(solutions)
     solution = None
-    for i in range(args.iterations):
-        c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
-        if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
-            continue
-        if len(solutions) == 0:
-            best = c
-            if not(args.quiet):
-                print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
-        else:
-            for sol in solutions:
-                if c.setSolution(sol):
-                    solution = sol
-                    best = c
-                    if not(args.quiet):
-                        print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
-                    break
+
+    if args.bruteforce:
+        c = crossword.generate_bf(wordDict,sentenceDict,args.columns,args.rows,iterations=args.iterations,solutions=solutions)
+        solution = c.solution
+    else:
+        for i in range(args.iterations):
+            c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
+            if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
+                continue
+            if len(solutions) == 0:
+                best = c
+                if not(args.quiet):
+                    print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
+            else:
+                for sol in solutions:
+                    if c.setSolution(sol):
+                        solution = sol
+                        best = c
+                        if not(args.quiet):
+                            print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
+                        break
+        c = best
+    
     t1 = time.time()
-    c = best
     if len(solutions) > 0 and solution == None:
         raise Exception("Could not produce puzzle with one of the given solutions.")
         
@@ -781,8 +843,9 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             print("#cycles:    "+str(c.numCycles()))
         print("given:      "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Sol:        "+str(solution))
-        print("Seed (hex): "+str(hex(args.seed)[2:].upper()))
-        print("Seed (int): "+str(args.seed))
+        if not(args.bruteforce):
+            print("Seed (hex): "+str(hex(args.seed)[2:].upper()))
+            print("Seed (int): "+str(args.seed))
         print("Time:       "+str(t1-t0)[:5] + " s")
 
     if not(args.no_output):
