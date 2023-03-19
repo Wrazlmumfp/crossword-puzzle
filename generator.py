@@ -335,7 +335,7 @@ class crossword:
         words = list(wordDict.keys())
         words.sort(key=len)
         # place longest word in the middle of the crossword
-        if not(args.quiet):
+        if args is not None and not(args.quiet):
             print("Doing iteration Nr. " + str(i),end="\r")
         c = crossword()
         w = random.choices(words,list(range(1,len(words)+1)))[0]
@@ -672,6 +672,8 @@ if __name__=='__main__':
 
 Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatically converted to AE, OE, UE, SS, respectively.
 """)
+    parser.add_argument("--no-output","-no",action="store_true",
+                        help="Does not output a puzzle (only shows infos).")
     parser.add_argument("--columns","-c",type=int,default=23,
                         help="Maximum number of desired columns for the output puzzle.")
     parser.add_argument("--rows","-r",type=int,default=25,
@@ -780,5 +782,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("Seed (int): "+str(args.seed))
         print("Time:       "+str(t1-t0)[:5] + " s")
 
-    with open(args.output,"w") as f:
-        print(latex(c,args.title,args.subtitle,info),file=f)
+    if not(args.no_output):
+        with open(args.output,"w") as f:
+            print(latex(c,args.title,args.subtitle,info),file=f)
