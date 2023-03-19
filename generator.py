@@ -257,6 +257,15 @@ class crossword:
     def score(self,maxSizeX=None,maxSizeY=None):
         # euclidean norm
         return np.sqrt(sum([s**2 for s in self.scores(maxSizeX,maxSizeY)]))
+    def scores_weights(numWords,numCycles,numIntersections,numCols,numRows,numWordsHor,numWordsVer):
+        # used by scores and scoresIfAdded
+        return (
+            1/4*numWords*numCycles,
+            3*numIntersections,
+            numWords**2*1/numCols,
+            numWords**2*1/numRows,
+            1/4*numWordsHor*numWordsVer
+        )
     def scores(self,maxSizeX=None,maxSizeY=None):
         if self.numWords() == 0:
             return (0,0)
@@ -265,13 +274,7 @@ class crossword:
         if maxSizeY != None and self.numRows() > maxSizeY:
             return (0,0)
         # (many cycles, many intersections, few columns, few rows, wordsHor/wordsVer balanced)
-        return (
-            1/4*self.numWords()*self.numCycles(),
-            3*self.numIntersections(),
-            self.numWords()**2*1/self.numCols(),
-            self.numWords()**2*1/self.numRows(),
-            1/8*len(self.wordsHor)*len(self.wordsVer)
-        )
+        return crossword.scores_weights(self.numWords(),self.numCycles(),self.numIntersections(),self.numCols(),self.numRows(),len(self.wordsHor),len(self.wordsVer))
     def scoreIfAdded(self,word,x,y,hor=True,maxSizeX=None,maxSizeY=None):
         # euclidean norm
         return np.sqrt(sum([s**2 for s in self.scoresIfAdded(word,x,y,hor,maxSizeX,maxSizeY)]))
@@ -287,6 +290,8 @@ class crossword:
             return (0,0)
         if maxSizeY != None and numRows_new > maxSizeY:
             return (0,0)
+        if self.numWords() == 0:
+            return (0,0,1/len(word),1,0)
         numWordsHor_new = len(self.wordsHor)+1 if hor else len(self.wordsHor)
         numWordsVer_new = len(self.wordsVer) if hor else len(self.wordsVer)+1
         numIntersections_new = self.numIntersections()
@@ -310,13 +315,7 @@ class crossword:
             numCycles_new = self.numCycles()
             self.graph.remove_edges(edges_added)
             self.graph.remove_nodes(nodes_added)
-        return (
-            1/4*numWords_new*numCycles_new,
-            3*numIntersections_new,
-            numWords_new**2*1/numCols_new,
-            numWords_new**2*1/numRows_new,
-            1/8*numWordsHor_new*numWordsVer_new
-        )
+        return crossword.scores_weights(numWords_new,numCycles_new,numIntersections_new,numCols_new,numRows_new,numWordsHor_new,numWordsVer_new)
     def setSolution(self,solution):
         global alphabet
         global args
