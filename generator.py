@@ -537,11 +537,15 @@ def latex(c,title,subtitle,info):
         + "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" \
         + "%%%%%%%%%%%%%%%%%%%   Document   %%%%%%%%%%%%%%%%%%%\n" \
         + "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" \
-        + "\\begin{document}"+printHeader(title,subtitle)+"\n\n\n"+printPuzzleDefs()+"\n\n" \
+        + "\\begin{document}\n" \
+        + ("\\begin{landscape}\n" if args.landscape else "") \
+        + printHeader(title,subtitle)+"\n\n\n"+printPuzzleDefs()+"\n\n" \
         + c.latexPuzzle() \
         + "\n\n\\vspace{0.5cm}\n\n" \
         + printSolution(c.solution) \
-        + "\n\n\\newpage\n" \
+        + "\n\n" \
+        + ("\\end{landscape}\n" if args.landscape else "") \
+        + "\\newpage\n" \
         + "\\begin{landscape}\n\\scriptsize\n" \
         + "\n".join(info)+"\\par\\bigskip\n\n" \
         + c.latexClues() \
@@ -626,7 +630,7 @@ def printPreamble():
 %%%%%%%%%%%%%%%%%%%   Preamble   %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\documentclass[a4paper,twoside,11pt]{article}
+\documentclass["""+("a3paper" if args.a3 else "a4paper")+r""",twoside,11pt]{article}
 
 \usepackage{babel}
 \usepackage[T1]{fontenc}                % Better wort separation
@@ -649,7 +653,7 @@ def printPreamble():
 % small 3-digit hex number at top left to match puzzle with clues
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0pt} % no ruler
-\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed if args is not None else "")[2:].upper()+r"""}
+\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed if args is not None else "").removeprefix("0x").upper()+r"""}
 
 % shortcuts for crossword puzzle
 \definecolor{cellcolor}{gray}{"""+cell_color+r"""} % background color of cells
@@ -731,9 +735,9 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
 """)
     parser.add_argument("--no-output","-no",action="store_true",
                         help="Does not output a puzzle (only shows infos).")
-    parser.add_argument("--columns","-c",type=int,default=23,
+    parser.add_argument("--columns","-c",type=int,default=None,
                         help="Maximum number of desired columns for the output puzzle.")
-    parser.add_argument("--rows","-r",type=int,default=25,
+    parser.add_argument("--rows","-r",type=int,default=None,
                         help="Maximum number of desired rows for the output puzzle.")
     parser.add_argument("--title",type=str,default=None,
                         help="Title of the puzzle.")
@@ -755,11 +759,26 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Specify a seed to make the puzzle creation deterministic.")
     parser.add_argument("--bruteforce","-bf",action="store_true",
                         help="Computes puzzle by brute-force search.")
+    parser.add_argument("--a3",action="store_true",
+                        help="Output is in A3.")
+    parser.add_argument("--landscape",action="store_true",
+                        help="Output is in landscape.")
     args = parser.parse_args()
 
-        
+    
+    if args.columns is None:
+        args.columns = 53 if args.a3 and args.landscape else \
+            35 if args.a3 and not(args.landscape) else \
+            35 if not(args.a3) and args.landscape else \
+            22 # if a4 and portrait
+    if args.rows is None:
+        args.rows = 28 if args.a3 and args.landscape else \
+            46 if args.a3 and not(args.landscape) else \
+            16 if not(args.a3) and args.landscape else \
+            25 # if a4 and portrait
+    
     if args.output == None:
-        ext = "_cwpuzzle_"+hex(args.seed)[2:].upper()+".tex"
+        ext = "_cwpuzzle_"+hex(args.seed).removeprefix("0x").upper()+".tex"
         args.output = "".join(args.input.split(".")[:-1])+ext if "." in args.input else args.input+ext
 
     if args.title == None:
