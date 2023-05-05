@@ -54,7 +54,8 @@ class crossword:
         return len(self.intersections)
     def numCycles(self):
         global args
-        if args is not None and not(args.nocycles):
+        # if args is None (i.e. test case), then we search for cycles
+        if args is not None and args.nocycles:
             return 0
         else:
             return self.graph.numCycles()
@@ -147,7 +148,7 @@ class crossword:
         other.xMax = self.xMax
         other.yMin = self.yMin
         other.yMax = self.yMax
-        if args is not None and args.nocycles:
+        if args is None or not(args.nocycles):
             other.graph = self.graph.copy()
         return other
     def add(self,word,x,y,hor=True,clue=None):
@@ -170,7 +171,7 @@ class crossword:
             if coord in self.letters.keys():
                 self.intersections.add(coord)
             self.set(coord[0],coord[1],l)
-            if args is not None and not(args.nocycles):
+            if args is not None and args.nocycles:
                 continue
             self.graph.add_node(coord)
             if k > 0:
@@ -263,7 +264,7 @@ class crossword:
     def scores_weights(numWords,numCycles,numIntersections,numCols,numRows,numWordsHor,numWordsVer):
         # used by scores and scoresIfAdded
         return (
-            1/4*numWords*numCycles,
+            1/2*numWords*numCycles,
             3*numIntersections,
             numWords**2*1/numCols,
             numWords**2*1/numRows,
@@ -307,14 +308,14 @@ class crossword:
             if coord in self.letters.keys():
                 numIntersections_new += 1
             if args is not None and args.nocycles:
-                nodes_added.append(coord)
-            else:
                 continue
-            self.graph.add_node(coord)
+            if not(coord in self.graph.nodes):
+                nodes_added.append(coord)
+                self.graph.add_node(coord)
             if k > 0:
                 self.graph.add_edge(prev,coord)
                 edges_added.append((prev,coord))
-        if args is not None and args.nocycles:
+        if args is None or not(args.nocycles):
             numCycles_new = self.numCycles()
             self.graph.remove_edges(edges_added)
             self.graph.remove_nodes(nodes_added)
@@ -452,7 +453,7 @@ class graph:
         # dictionary storing all neighbours of nodes
         self.neighbours = dict()
     def __str__(self):
-        return "graph("+str(self.nodes)+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
+        return "graph("+str(sorted(list(self.nodes)))+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
     def __repr__(self):
         return str(self)
     def add_node(self,node):
@@ -765,7 +766,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Output is in landscape.")
     args = parser.parse_args()
 
-    
     if args.columns is None:
         args.columns = 53 if args.a3 and args.landscape else \
             35 if args.a3 and not(args.landscape) else \
@@ -776,7 +776,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             46 if args.a3 and not(args.landscape) else \
             16 if not(args.a3) and args.landscape else \
             25 # if a4 and portrait
-    
+
     if args.output == None:
         ext = "_cwpuzzle_"+hex(args.seed).removeprefix("0x").upper()+".tex"
         args.output = "".join(args.input.split(".")[:-1])+ext if "." in args.input else args.input+ext
