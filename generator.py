@@ -776,6 +776,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Output is in A3.")
     parser.add_argument("--landscape",action="store_true",
                         help="Output is in landscape.")
+    parser.add_argument("--minscore",type=int,
+                        help="Computes a puzzle with a score at least the given. Overwrites --iterations. Warning: May not terminate if given number is too high!")
     args = parser.parse_args()
 
 
@@ -860,7 +862,9 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         c = crossword.generate_bf(wordDict,sentenceDict,args.columns,args.rows,iterations=args.iterations,solutions=solutions)
         solution = c.solution
     else:
-        for i in range(args.iterations):
+        i = 0
+        while True:
+            i += 1
             c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
             if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
                 continue
@@ -876,6 +880,10 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         if not(args.quiet):
                             print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
                         break
+            if args.minscore is None and i >= args.iterations:
+                break
+            elif args.minscore is not None and c.score(args.columns,args.rows) >= args.minscore:
+                break
         c = best
     
     t1 = time.time()
