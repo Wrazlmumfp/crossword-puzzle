@@ -101,7 +101,7 @@ class crossword:
             if d in self.solutionDict.keys():
                 # overwrites previously written letter
                 # e.g. [\cwNumText{21/42}{B}][o]{N}
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwNumText{"+str(indices[0]+1)+"/"+str(indices[1]+1)+"}{"+str(self.solutionDict[d])+"}][ogf]"+"{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwNumText{"+str(indices[0]+1)+"/"+str(indices[1]+1)+"}{"+str(self.solutionDict[d])+"}][gfo]"+"{"+self.get(d)+"}"
             else:
                 # e.g. [\cwNum{42}][B]
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(indices[0]+1)+"/"+str(indices[1]+1)+"][gf]{"+self.get(d)+"}"
