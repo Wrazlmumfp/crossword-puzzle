@@ -80,8 +80,10 @@ class crossword:
     def __repr__(self):
         return str(self)
     def latexPuzzle(self):
+        global args
         n = self.numRows()
         m = self.numCols()
+        # L[y][x] <-> cell (x,y)
         L = [ ["{}" for i in range(m)] for i in range(n) ]
         # insert letters
         for d in self.letters.keys():
@@ -113,6 +115,13 @@ class crossword:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwShortNumText{"+str(i+1)+"}{"+str(self.solutionDict[d])+"}][gfo]{"+self.get(d)+"}"
             else:
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(i+1)+"][gf]{"+self.get(d)+"}"
+        # print crosses in empty boxes surrounded by letters if argument nogray is set
+        if args.nogray:
+            # iterates over all letters and checks whether coordinate below (col,row)
+            # is an empty box surrounded by letters
+            for x,y in self.letters.keys():
+                if {(x-1,y-1), (x+1,y-1), (x,y-2)}.issubset(self.letters.keys()) and not( (x,y-1) in self.letters.keys()):
+                    L[n-(y-1-self.yMin+1)][x-self.xMin] = "[][/,]{ }"
         return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
