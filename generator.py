@@ -631,6 +631,7 @@ def printSolution(solution):
 
 def printPreamble():
     global args
+    global seed
     if args is not None and args.nogray:
         cell_color = "1"
     else:
@@ -663,7 +664,7 @@ def printPreamble():
 % small 3-digit hex number at top left to match puzzle with clues
 \pagestyle{fancy}
 \renewcommand{\headrulewidth}{0pt} % no ruler
-\fancyhead[L]{\scriptsize\color{darkgray} """+hex(args.seed if args is not None else "").removeprefix("0x").upper()+r"""}
+\fancyhead[L]{\scriptsize\color{darkgray} """+hex(seed if args is not None else "").removeprefix("0x").upper()+r"""}
 
 % shortcuts for crossword puzzle
 \definecolor{cellcolor}{gray}{"""+cell_color+r"""} % background color of cells
@@ -765,8 +766,10 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Changes language of output to english (default german).")
     parser.add_argument("--nogray",action="store_true",
                         help="Sets background of cells to white instead of gray.")
-    parser.add_argument("--seed", "-s", type=int, default=random.randint(0,4095),
+    parser.add_argument("--seed", "-s", type=int,
                         help="Specify a seed to make the puzzle creation deterministic.")
+    parser.add_argument("--hexseed","-hs",type=str,
+                        help="Same as --seed but input is interpreted as hexadecimal.")
     parser.add_argument("--bruteforce","-bf",action="store_true",
                         help="Computes puzzle by brute-force search.")
     parser.add_argument("--a3",action="store_true",
@@ -774,6 +777,21 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     parser.add_argument("--landscape",action="store_true",
                         help="Output is in landscape.")
     args = parser.parse_args()
+
+
+    if (args.seed is not None) and (args.hexseed is not None):
+        raise Exception("Please only specify an integer seed OR a hexadecimal seed.")
+
+    if args.hexseed is not None:
+        seed = int(args.hexseed,16)
+        random.seed()
+    elif args.seed is not None:
+        seed = args.seed
+    else:
+        seed = random.randint(0,4095)
+
+    random.seed(seed)
+
 
     if args.columns is None:
         args.columns = 53 if args.a3 and args.landscape else \
@@ -787,7 +805,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             25 # if a4 and portrait
 
     if args.output == None:
-        ext = "_cwpuzzle_"+hex(args.seed).removeprefix("0x").upper()+".tex"
+        ext = "_cwpuzzle_"+hex(seed).removeprefix("0x").upper()+".tex"
         args.output = "".join(args.input.split(".")[:-1])+ext if "." in args.input else args.input+ext
 
     if args.title == None:
@@ -796,8 +814,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     with open(args.input, "r") as f:
         lines = f.readlines()
 
-    random.seed(args.seed)
-    
+        
     solutions = []
     wordnum = 0 # words without sentences
     wordDict = dict()
@@ -876,8 +893,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         print("given:      "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
         print("Sol:        "+str(solution))
         if not(args.bruteforce):
-            print("Seed (hex): "+str(hex(args.seed)[2:].upper()))
-            print("Seed (int): "+str(args.seed))
+            print("Seed (hex): "+str(hex(seed)[2:].upper()))
+            print("Seed (int): "+str(seed))
         print("Time:       "+str(t1-t0)[:5] + " s")
 
     if not(args.no_output):
