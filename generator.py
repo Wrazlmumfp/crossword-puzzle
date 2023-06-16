@@ -32,7 +32,7 @@ class crossword:
     def __getitem__(self,i):
         return self.get(i)
     def get(self,x,y=None):
-        if y == None: # i is a tuple
+        if y is None: # i is a tuple
             x,y = x
         try:
             return self.letters[x,y]
@@ -351,8 +351,6 @@ class crossword:
         words = list(wordDict.keys())
         words.sort(key=len)
         # place longest word in the middle of the crossword
-        if args is not None and not(args.quiet):
-            print("Doing iteration Nr. " + str(i),end="\r")
         c = crossword()
         w = random.choices(words,list(range(1,len(words)+1)))[0]
         if w in sentenceDict.keys():
@@ -395,8 +393,8 @@ class crossword:
             laidAside = []
         #print("added in order: " + str(added))
         return c
-    def generate_bf(wordDict,stentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None,solutions=None):
-        allCWs = crossword.allCrosswords(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout)
+    def generate_bf(wordDict,stentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None,solutions=None,minscore=None):
+        allCWs = crossword.allCrosswords(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout,minscore)
         if solutions is None:
             return max(allCWs,key=lambda x: x.score())
         else:
@@ -585,7 +583,7 @@ def printHeader(title,subtitle):
 def printSolution(solution):
     global alphabet
     global args
-    if solution == None:
+    if solution is None:
         return ""
     # split solution at spaces in parts of length <= 23
     solutionList = solution.split(" ")
@@ -793,6 +791,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         seed = random.randint(0,4095)
 
     random.seed(seed)
+    if not(args.quiet):
+        print("Seed was", seed, "(int)")
 
 
     if args.columns is None:
@@ -806,11 +806,11 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             16 if not(args.a3) and args.landscape else \
             25 # if a4 and portrait
 
-    if args.output == None:
+    if args.output is None:
         ext = "_cwpuzzle_"+hex(seed).removeprefix("0x").upper()+".tex"
         args.output = "".join(args.input.split(".")[:-1])+ext if "." in args.input else args.input+ext
 
-    if args.title == None:
+    if args.title is None:
         args.title = "Crossword Puzzle" if args.english else "Kreuzworträtsel"
 
     with open(args.input, "r") as f:
@@ -865,7 +865,11 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         i = 0
         while True:
             i += 1
+            if args is not None and not(args.quiet):
+                print("Doing iteration Nr. " + str(i),end="\r")
             c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
+            if args.minscore is None and i >= args.iterations:
+                break
             if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
                 continue
             if len(solutions) == 0:
@@ -880,14 +884,12 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         if not(args.quiet):
                             print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
                         break
-            if args.minscore is None and i >= args.iterations:
-                break
-            elif args.minscore is not None and c.score(args.columns,args.rows) >= args.minscore:
+            if args.minscore is not None and solution is not None and c.score(args.columns,args.rows) >= args.minscore:
                 break
         c = best
     
     t1 = time.time()
-    if len(solutions) > 0 and solution == None:
+    if len(solutions) > 0 and solution is None:
         raise Exception("Could not produce puzzle with one of the given solutions.")
         
     if not(args.quiet):
