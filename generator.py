@@ -816,7 +816,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     with open(args.input, "r") as f:
         lines = f.readlines()
 
-        
+
+    # parse input file
     solutions = []
     wordnum = 0 # words without sentences
     wordDict = dict()
@@ -851,6 +852,20 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             line = line.split(": ")
             wordDict[convertWord(line[0])] = ": ".join(line[1:]).replace("\n","")
             wordnum += 1
+
+
+    # check whether solutions are possible
+    all_letters = [ l for w in wordDict.keys() for l in w ]
+    from collections import Counter
+    def is_submultiset(l1, l2):
+        c1, c2 = Counter(l1), Counter(l2)
+        return all(c1[k] <= c2[k] for k in c1)
+    if len(solutions) > 0 and not(any(is_submultiset(s.replace(" ",""),all_letters) for s in solutions)):
+        s = solutions[0].replace(" ","")
+        c1, c2 = Counter(s), Counter(all_letters)
+        missing_letters = [ (l,c1[l]-c2[l]) for l in set(s) if c1[l] > c2[l] ]
+        raise Exception("None of the given solutions is possible for the given words. Missing letters for first solution:\n"
+                        +str(missing_letters))
 
 
     t0 = time.time()
