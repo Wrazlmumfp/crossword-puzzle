@@ -908,7 +908,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         if not(args.quiet):
                             print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
                         break
-            if args.minscore is not None and solution is not None and c.score(args.columns,args.rows) >= args.minscore:
+            if args.minscore is not None and solution is not None and best.score(args.columns,args.rows) >= args.minscore:
                 break
         c = best
     
@@ -930,6 +930,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             print("Seed (hex): "+str(hex(seed)[2:].upper()))
             print("Seed (int): "+str(seed))
         print("Time:       "+str(t1-t0)[:5] + " s")
+        print("Iterations: "+str(i))
 
     if not(args.no_output):
         with open(args.output, "w", encoding="utf-8") as f:
