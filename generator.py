@@ -11,6 +11,9 @@ class crossword:
     def __init__(self):
         # letters[(1,5)] == "R"
         self.letters = dict()
+        self.letterkeys = set() # same as self.letters.keys()
+        # letter_positions["A"] == {(1,2),(4,3)}
+        self.letter_positions = dict([ (l,set()) for l in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ])
         # wordsHor[(6,4)] == "WORD"
         self.wordsHor = dict()
         # wordsVer[(7,1)] == "WORD"
@@ -31,17 +34,23 @@ class crossword:
         self.graph = graph()
     def __getitem__(self,i):
         return self.get(i)
-    def get(self,x,y=None):
-        if y is None: # i is a tuple
-            x,y = x
+    def get(self,coord):
         try:
-            return self.letters[x,y]
+            return self.letters[coord]
         except KeyError:
             return " "
+    def isLetter(self,coord,l):
+        """Checks whether letters[x,y] == l (more efficient than 'letters[x,y] == l'."""
+        if l == " ":
+            return not( coord in self.letterkeys )
+        else:
+            return coord in self.letter_positions[l]
     def getSolution(self):
         return self.solution
     def set(self,x,y,l):
         self.letters[x,y] = l
+        self.letterkeys.add( (x,y) )
+        self.letter_positions[l].add((x,y))
     def numRows(self):
         return self.yMax-self.yMin+1
     def numCols(self):
@@ -67,7 +76,7 @@ class crossword:
         n = self.numRows()
         m = self.numCols()
         L = [ [" " for i in range(m)] for i in range(n) ]
-        for d in self.letters.keys():
+        for d in self.letterkeys:
             # bold if solution letter
             L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = self.get(d) if not(d) in self.solutionDict.keys() else "\033[1m"+self.get(d)+"\033[0m"
         outputLines = ["".join([str(i) for i in range(max(self.xMin,-9),0)])+" "+" ".join([str(i) for i in range(0,min(self.xMax+1,10))])] \
@@ -86,7 +95,7 @@ class crossword:
         # L[y][x] <-> cell (x,y)
         L = [ ["{}" for i in range(m)] for i in range(n) ]
         # insert letters
-        for d in self.letters.keys():
+        for d in self.letterkeys:
             if d in self.solutionDict.keys():
                 L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][gfo]{"+self.get(d)+"}"
             else:
@@ -119,8 +128,8 @@ class crossword:
         if args.nogray:
             # iterates over all letters and checks whether coordinate below (col,row)
             # is an empty box surrounded by letters
-            for x,y in self.letters.keys():
-                if {(x-1,y-1), (x+1,y-1), (x,y-2)}.issubset(self.letters.keys()) and not( (x,y-1) in self.letters.keys()):
+            for x,y in self.letterkeys:
+                if {(x-1,y-1), (x+1,y-1), (x,y-2)}.issubset(self.letterkeys) and not( (x,y-1) in self.letterkeys):
                     L[n-(y-1-self.yMin+1)][x-self.xMin] = "[][/,]{ }"
         return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
@@ -177,7 +186,7 @@ class crossword:
         for k,l in enumerate(word):
             coord = (x+k,y) if hor else (x,y-k)
             prev = (x+k-1,y) if hor else (x,y-k+1) # coordinate before coord
-            if coord in self.letters.keys():
+            if coord in self.letterkeys:
                 self.intersections.add(coord)
             self.set(coord[0],coord[1],l)
             if args is not None and args.nocycles:
@@ -189,17 +198,17 @@ class crossword:
     def isAddable(self,word,x,y,hor=True):
         """Checks whether a given word can be added at position x,y"""
         word = word.upper()
-        relevantKeys = self.letters.keys()
+        relevantKeys = self.letterkeys
         for k in range(len(word)):
             coords = (x+k,y) if hor else (x,y-k)
             left = (x+k,y+1) if hor else (x+1,y-k)
             right = (x+k,y-1) if hor else (x-1,y-k)
             # checks whether letter would overwrite other letter
-            if not(self.get(coords) in {word[k]," "}):
+            if not(self.isLetter(coords,word[k]) or self.isLetter(coords," ")):
                 #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because of letter "+self.get(coords)+" instead of "+word[k]+" at position "+str(coords)+".")
                 return False
             # checks whether neighbouring positions are only letters of intersections words
-            if not(self.get(coords) == word[k]) and {self.get(left),self.get(right)} != {" "}:
+            if not(self.isLetter(coords,word[k])) and not(self.isLetter(left," ") and self.isLetter(right," ")):
                 #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because it would neighbour other word.")
                 return False
             # checks whether position is already taken by two words
@@ -232,7 +241,7 @@ class crossword:
     def isAddable2(self,word,x,y,hor=True):
         """Less efficient but more elegant version of isAddable"""
         word = word.upper()
-        relevantKeys = self.letters.keys()
+        relevantKeys = self.letterkeys
         wordDict = self.wordsHor if hor else self.wordsVer
         nextCoord = (x+len(word),y) if hor else (x,y-len(word))
         prevCoord = (x-1,y) if hor else (x,y+1)
@@ -241,8 +250,8 @@ class crossword:
                  if (coords := (x+k,y) if hor else (x,y-k)) \
                  and (left := (x+k,y+1) if hor else (x+1,y-k)) \
                  and (right := (x+k,y-1) if hor else (x-1,y-k)) \
-                 and (not(self.get(coords) in {l," "}) \
-                      or (not(self.get(coords) == l) and {self.get(left),self.get(right)} != {" "}) \
+                 and (not(self.isLetter(coords,l) or self.isLetter(coords," ")) \
+                      or (not(self.isLetter(coords,l)) and (not(self.isLetter(left," ")) or not(self.isLetter(right," ")))) \
                       or (coords in self.intersections) \
                       or (coords in wordDict.keys()) \
                       or (hor and k < len(word)) and (((x+k,y+1) in relevantKeys and (x+k+1,y+1) in relevantKeys) or ((x+k,y-1) in relevantKeys and (x+k+1,y-1) in relevantKeys)) \
@@ -260,7 +269,7 @@ class crossword:
         possibleCoordinates = set()
         for k in range(len(word)):
             l = word[k]
-            coordinates = {j for j in self.letters.keys() if self.get(j) == l}
+            coordinates = {j for j in self.letterkeys if self.isLetter(j,l)}
             for x,y in coordinates:
                 if self.isAddable(word,x-k,y,True):
                     possibleCoordinates.add( (x-k,y,True) )
@@ -314,7 +323,7 @@ class crossword:
         for k,l in enumerate(word):
             coord = (x+k,y) if hor else (x,y-k)
             prev = (x+k-1,y) if hor else (x,y-k+1) # coordinate before coord
-            if coord in self.letters.keys():
+            if coord in self.letterkeys:
                 numIntersections_new += 1
             if args is not None and args.nocycles:
                 continue
@@ -337,7 +346,7 @@ class crossword:
         alreadyTaken = set()
         solutionDict = dict() # self.solutionDict is not touched until it is clear that the solution is possible
         for i,l in enumerate(solution.upper().replace(" ","")):
-            possibleCoords = [coord for coord in self.letters.keys() if self.letters[coord] == l and not(coord in alreadyTaken)]
+            possibleCoords = [coord for coord in self.letterkeys if self.isLetter(coord,l) and not(coord in alreadyTaken)]
             if possibleCoords == []:
                 return False
             position = random.sample(possibleCoords,1)[0]
@@ -816,7 +825,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     with open(args.input, "r") as f:
         lines = f.readlines()
 
-        
+
+    # parse input file
     solutions = []
     wordnum = 0 # words without sentences
     wordDict = dict()
@@ -853,6 +863,20 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             wordnum += 1
 
 
+    # check whether solutions are possible
+    all_letters = [ l for w in wordDict.keys() for l in w ]
+    from collections import Counter
+    def is_submultiset(l1, l2):
+        c1, c2 = Counter(l1), Counter(l2)
+        return all(c1[k] <= c2[k] for k in c1)
+    if len(solutions) > 0 and not(any(is_submultiset(s.replace(" ",""),all_letters) for s in solutions)):
+        s = solutions[0].replace(" ","")
+        c1, c2 = Counter(s), Counter(all_letters)
+        missing_letters = [ (l,c1[l]-c2[l]) for l in set(s) if c1[l] > c2[l] ]
+        raise Exception("None of the given solutions is possible for the given words. Missing letters for first solution:\n"
+                        +str(missing_letters))
+
+
     t0 = time.time()
     best = crossword()
     random.shuffle(solutions)
@@ -884,7 +908,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         if not(args.quiet):
                             print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
                         break
-            if args.minscore is not None and solution is not None and c.score(args.columns,args.rows) >= args.minscore:
+            if args.minscore is not None and solution is not None and best.score(args.columns,args.rows) >= args.minscore:
                 break
         c = best
     
@@ -906,6 +930,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             print("Seed (hex): "+str(hex(seed)[2:].upper()))
             print("Seed (int): "+str(seed))
         print("Time:       "+str(t1-t0)[:5] + " s")
+        print("Iterations: "+str(i))
 
     if not(args.no_output):
         with open(args.output, "w", encoding="utf-8") as f:
