@@ -393,8 +393,8 @@ class crossword:
             laidAside = []
         #print("added in order: " + str(added))
         return c
-    def generate_bf(wordDict,stentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None,solutions=None,minscore=None):
-        allCWs = crossword.allCrosswords(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout,minscore)
+    def generate_bf(wordDict,stentenceDict,maxSizeX=None,maxSizeY=None,iterations=None,timeout=None,solutions=None):
+        allCWs = crossword.allCrosswords(wordDict,sentenceDict,maxSizeX,maxSizeY,iterations,timeout)
         if solutions is None:
             return max(allCWs,key=lambda x: x.score())
         else:
