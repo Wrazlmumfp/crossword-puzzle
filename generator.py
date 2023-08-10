@@ -79,6 +79,9 @@ class crossword:
         for d in self.letterkeys:
             # bold if solution letter
             L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = self.get(d) if not(d) in self.solutionDict.keys() else "\033[1m"+self.get(d)+"\033[0m"
+        # chr(9484), chr(9488), chr(9492), chr(9496) = top left, top right, bottom left, and bottom right corners
+        # chr(9472) = horizontal line
+        # chr(9474) = vertical line
         outputLines = ["".join([str(i) for i in range(max(self.xMin,-9),0)])+" "+" ".join([str(i) for i in range(0,min(self.xMax+1,10))])] \
                       + [chr(9484)+chr(9472)*(2*m-1) + chr(9488)] \
                       + [chr(9474)+" ".join(row)+chr(9474) for row in L] \
@@ -97,9 +100,9 @@ class crossword:
         # insert letters
         for d in self.letterkeys:
             if d in self.solutionDict.keys():
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwText{"+self.solutionDict[d]+"}][gfo]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = rf"[\cwText{{ {self.solutionDict[d]} }}][gfo]{{ {self.get(d)} }}"
             else:
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "[][gf]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = f"[][gf]{{ {self.get(d)} }}"
         wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
         wordsVer_sorted = list(self.wordsVer.keys())
@@ -112,18 +115,18 @@ class crossword:
             if d in self.solutionDict.keys():
                 # overwrites previously written letter
                 # e.g. [\cwNumText{21/42}{B}][o]{N}
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwNumText{"+str(indices[0]+1)+"/"+str(indices[1]+1)+"}{"+str(self.solutionDict[d])+"}][gfo]"+"{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = rf"[\cwNumText{{ {indices[0]+1}/{indices[1]+1}}}{{ {self.solutionDict[d]} }}][gfo]{{ {d} }}"
             else:
                 # e.g. [\cwNum{42}][B]
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(indices[0]+1)+"/"+str(indices[1]+1)+"][gf]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = f"[{indices[0]+1}/{indices[1]+1}][gf]{{ {self.get(d)} }}"
         # insert all other word numbers
         for i,d in enumerate(words_sorted):
             if d in words_bothHorVer:
                 continue
             if d in self.solutionDict.keys():
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = r"[\cwShortNumText{"+str(i+1)+"}{"+str(self.solutionDict[d])+"}][gfo]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = rf"[\cwShortNumText{{ {i+1} }}{{ {self.solutionDict[d]} }}][gfo]{{ {self.get(d)} }}"
             else:
-                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = "["+str(i+1)+"][gf]{"+self.get(d)+"}"
+                L[n-(d[1]-self.yMin+1)][d[0]-self.xMin] = f"[{i+1}][gf]{{ {self.get(d)} }}"
         # print crosses in empty boxes surrounded by letters if argument nogray is set
         if args.nogray:
             # iterates over all letters and checks whether coordinate below (col,row)
@@ -131,26 +134,37 @@ class crossword:
             for x,y in self.letterkeys:
                 if {(x-1,y-1), (x+1,y-1), (x,y-2)}.issubset(self.letterkeys) and not( (x,y-1) in self.letterkeys):
                     L[n-(y-1-self.yMin+1)][x-self.xMin] = "[][/,]{ }"
-        return r"\begin{Puzzle}{"+str(self.numCols())+"}{"+str(self.numRows())+"}%\n  |" \
+        return rf"\begin{{Puzzle}}{{ {self.numCols()} }}{{ {self.numRows()} }}%\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
         wordsHor_sorted = list(self.wordsHor.keys())
         wordsHor_sorted.sort(key=lambda x: -x[1])
         wordsVer_sorted = list(self.wordsVer.keys())
         wordsVer_sorted.sort(key=lambda x: x[0])
-        hor = "{\\Large \\textbf{Horizontal}}\n" \
-            +"\\begin{multicols}{2}\n" \
-            +"  \\begin{enumerate}\n" \
-            +"\n".join(["  \\item[("+str(i+1)+")] "+self.clues[self.wordsHor[d]] for i,d in enumerate(wordsHor_sorted)]) \
-            +"\n  \\end{enumerate}" \
-            +"\n\\end{multicols}"
-        ver ="\n{\\Large \\textbf{Vertikal}}\n" \
-            +"\\begin{multicols}{2}\n" \
-            +"  \\begin{enumerate}\n" \
-            +"\n".join(["  \\item[("+str(len(self.wordsHor)+i+1)+")] "+self.clues[self.wordsVer[d]] for i,d in enumerate(wordsVer_sorted)]) \
-            +"\n  \\end{enumerate}" \
-            +"\n\\end{multicols}"
-        return  "\\begin{multicols}{2}\n" + hor + "\n\n\\columnbreak\n\n" + ver + "\n\\end{multicols}\n"
+        new_line = "\n"
+        hor = rf"""
+{{\Large \textbf{{Horizontal}}}}
+\begin{{multicols}}{{2}}
+  \begin{{enumerate}}
+{new_line.join([f'  {chr(92)}item[({i+1})] {self.clues[self.wordsHor[d]]}' for i,d in enumerate(wordsHor_sorted)])}
+  \end{{enumerate}}
+\end{{multicols}}"""
+        ver = rf"""
+{{\Large \textbf{{Vertikal}}}}
+\begin{{multicols}}{{2}}
+  \begin{{enumerate}}
+{new_line.join([f'  {chr(92)}item[({i+1+len(self.wordsHor)})] {self.clues[self.wordsVer[d]]}' for i,d in enumerate(wordsVer_sorted)])}
+  \end{{enumerate}}
+\end{{multicols}}"""
+        return rf"""\begin{{multicols}}{{2}}
+{hor}
+
+\columnbreak
+
+{ver}
+
+\end{{multicols}}
+"""
     def copy(self):
         """Returns a copy of self."""
         global args
@@ -205,37 +219,30 @@ class crossword:
             right = (x+k,y-1) if hor else (x-1,y-k)
             # checks whether letter would overwrite other letter
             if not(self.isLetter(coords,word[k]) or self.isLetter(coords," ")):
-                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because of letter "+self.get(coords)+" instead of "+word[k]+" at position "+str(coords)+".")
                 return False
             # checks whether neighbouring positions are only letters of intersections words
             if not(self.isLetter(coords,word[k])) and not(self.isLetter(left," ") and self.isLetter(right," ")):
-                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because it would neighbour other word.")
                 return False
             # checks whether position is already taken by two words
             if coords in self.intersections:
-                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" because already two words intersect in letter "+str(word[k])+" at position "+str((x+k,y)))
                 return False
             # checks whether letter is not beginning of other word
             wordDict = self.wordsHor if hor else self.wordsVer
             if coords in wordDict.keys():
-                #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would intersect with word "+wordDict[coords]+" at position "+str(coords)+".")
                 return False
             # checks whether word runs parallel to other word
             if hor and k < len(word):
                 if ((x+k,y+1) in relevantKeys and (x+k+1,y+1) in relevantKeys)\
                    or ((x+k,y-1) in relevantKeys and (x+k+1,y-1) in relevantKeys):
-                    #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
                     return False
             elif not(hor) and k < len(word):
                 if ((x+1,y-k) in relevantKeys and (x+1,y-k-1) in relevantKeys)\
                    or ((x-1,y-k) in relevantKeys and (x-1,y-k-1) in relevantKeys):
-                    #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as it would run parallel to another word.")
                     return False
         nextCoord = (x+len(word),y) if hor else (x,y-len(word))
         prevCoord = (x-1,y) if hor else (x,y+1)
         # checks whether there is a letter before or after the word
         if nextCoord in relevantKeys or prevCoord in relevantKeys:
-            #raise Exception("Cannot add word "+word+" at position "+str((x,y))+" as there is a new letter after its end.")
             return False
         return True
     def isAddable2(self,word,x,y,hor=True):
@@ -850,7 +857,6 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                 .replace("}", " ").replace("\"", " ").replace("\n", " ")\
                 .split()  # splits on any whitespace and ignores empty strings by default.
             sentenceWords = [w[1:] for w in all_words if len(w) > 1 and w[0] == "§"]
-            #clue = r"``\textit{"+line.replace("§","").replace("\n","")+"}''"
             clue=line[1:].replace("§","").replace("\n","")
             for w in sentenceWords:
                 keyword = convertWord(w)
@@ -899,14 +905,14 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             if len(solutions) == 0:
                 best = c
                 if not(args.quiet):
-                    print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
+                    print(f"Found new one at iteration {i}! New score: {str(best.score())[:5]}")
             else:
                 for sol in solutions:
                     if c.setSolution(sol):
                         solution = sol
                         best = c
                         if not(args.quiet):
-                            print("Found new one at iteration "+str(i)+"! New score: "+str(best.score())[:5])
+                            print(f"Found new one at iteration {i}! New score: {str(best.score())[:5]}")
                         break
             if args.minscore is not None and solution is not None and best.score(args.columns,args.rows) >= args.minscore:
                 break
@@ -918,19 +924,19 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
         
     if not(args.quiet):
         print(c)
-        print("scores:     "+str(c.scores()))
-        print("score:      "+str(c.score())[:7])
-        print("size:       "+str(c.numCols())+"x"+str(c.numRows()))
-        print("#words:     "+str(c.numWords()))
+        print(f"scores:     {c.scores()}")
+        print(f"score:      {str(c.score())[:7]}")
+        print(f"size:       {c.numCols()} x {c.numRows()}")
+        print(f"#words:     {c.numWords()}")
         if not(args.nocycles):
-            print("#cycles:    "+str(c.numCycles()))
-        print("given:      "+str(wordnum)+" words, "+str(len(sentenceDict))+" sentences")
-        print("Sol:        "+str(solution))
+            print(f"#cycles:    {c.numCycles()}")
+        print(f"given:      {wordnum} words, {len(sentenceDict)} sentences")
+        print(f"Sol:        {solution}")
         if not(args.bruteforce):
-            print("Seed (hex): "+str(hex(seed)[2:].upper()))
-            print("Seed (int): "+str(seed))
-        print("Time:       "+str(t1-t0)[:5] + " s")
-        print("Iterations: "+str(i))
+            print(f"Seed (hex): {hex(seed)[2:].upper()}")
+            print(f"Seed (int): {seed}")
+        print(f"Time:       {str(t1-t0)[:5]} s")
+        print(f"Iterations: {i}")
 
     if not(args.no_output):
         with open(args.output, "w", encoding="utf-8") as f:
