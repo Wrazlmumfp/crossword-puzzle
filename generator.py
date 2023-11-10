@@ -134,7 +134,7 @@ class crossword:
             for x,y in self.letterkeys:
                 if {(x-1,y-1), (x+1,y-1), (x,y-2)}.issubset(self.letterkeys) and not( (x,y-1) in self.letterkeys):
                     L[n-(y-1-self.yMin+1)][x-self.xMin] = "[][/,]{ }"
-        return rf"\begin{{Puzzle}}{{ {self.numCols()} }}{{ {self.numRows()} }}%\n  |" \
+        return rf"\begin{{Puzzle}}{{ {self.numCols()} }}{{ {self.numRows()} }}%"+"\n  |" \
             +"|.\n  |".join([" |".join(l) for l in L]) + "\n\\end{Puzzle}"
     def latexClues(self):
         wordsHor_sorted = list(self.wordsHor.keys())
@@ -601,12 +601,12 @@ def printSolution(solution):
     global args
     if solution is None:
         return ""
-    # split solution at spaces in parts of length <= 23
+    # split solution at spaces in parts of length <= args.columns
     solutionList = solution.split(" ")
     splittedSolution = []
     s = []
     for l in solutionList:
-        if len("".join(s))+len(s)+len(l) > 23:
+        if len("".join(s))+len(s)+len(l) > args.columns:
             splittedSolution.append(s)
             s = [l]
         else:
@@ -624,9 +624,11 @@ def printSolution(solution):
             solution_alphabet.append(alphabet[i])
             i += 1
     sol="Solution" if args is not None and args.english else "Lösung"
-    return sol+""": \\par \\vspace{0.5cm}
-\\begin{Puzzle}{23}{"""+str(2*len(splittedSolution)-1)+"}\n" \
-    + "|.\n|.\n".join([
+    return sol+rf""": 
+\par 
+\vspace{{0.5cm}}
+\begin{{Puzzle}}{{{args.columns}}}{{{2*len(splittedSolution)-1}}}
+""" + "|.\n|.\n".join([
         " ".join([
             ("|[\\cwText{"
              + solution_alphabet[i+sum([len(sol_part)+1
@@ -637,8 +639,8 @@ def printSolution(solution):
             for i,s in enumerate(solution_part)
         ]) for k,solution_part in enumerate(splittedSolution)
     ]) \
-            + """|.
-\\end{Puzzle}
+            + r"""|.
+\end{Puzzle}
 """
 
 
