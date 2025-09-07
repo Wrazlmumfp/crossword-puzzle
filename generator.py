@@ -723,7 +723,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
                         help="Title of the puzzle.")
     parser.add_argument("--subtitle",type=str,default="",
                         help="Subtitle of the puzzle.")
-    parser.add_argument("--iterations","-it",type=int,default=100,
+    parser.add_argument("--iterations","-it",type=int,default=None,
                         help="Number of iterations (higher number = possible better puzzle).")
     parser.add_argument("--nocycles",action="store_true",
                         help="Does not search for cycles (speeds up computation by ~20%%).")
@@ -844,6 +844,8 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
     solution = None
 
     if args.bruteforce:
+        if args.iterations is None:
+            print("WARNING: You didn't set --iterations. Computation may take a lot of time.")
         c = crossword.generate_bf(wordDict,sentenceDict,args.columns,args.rows,iterations=args.iterations,solutions=solutions)
         solution = c.solution
     else:
