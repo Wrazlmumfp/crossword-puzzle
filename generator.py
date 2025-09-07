@@ -461,90 +461,44 @@ class crossword:
                 allCrosswords_iteration += 1
             allCrosswords_set.add(self)
 
-    
+
+            
 class graph:
     # undirected graph
     def __init__(self):
         # nodes should be set of tuples (coordinates), edges set of frozensets of tuples
         self.nodes = set()
         self.edges = set()
-        # important for graph.numCycles()
-        self.parent = dict()
-        self.color = dict()
-        self.cycleNumber = None
-        # dictionary storing all neighbours of nodes
-        self.neighbours = dict()
     def __str__(self):
         return "graph("+str(sorted(list(self.nodes)))+", {"+", ".join([str(tuple(e)) for e in self.edges])+"})"
     def __repr__(self):
         return str(self)
     def add_node(self,node):
-        if not(node in self.nodes):
-            self.nodes.add(node)
-            self.neighbours[node] = set()
+        self.nodes.add(node)
     def extend_nodes(self,L):
-        for l in L:
-            self.add_node(l)
+        self.nodes.update(set(L))
     def remove_node(self,node):
         self.nodes.discard(node)
-        del self.neighbours[node]
     def remove_nodes(self,L):
-        for node in L:
-            self.remove_node(node)
+        self.nodes.difference_update(set(L))
     def add_edge(self,node1,node2):
         self.edges.add( frozenset([node1, node2]) )
-        self.neighbours[node1].add(node2)
-        self.neighbours[node2].add(node1)
     def extend_edges(self,L):
-        for node1,node2 in L:
-            self.add_edge(node1,node2)
+        assert(len(l) == 2 for l in L)
+        self.edges.update({ frozenset(l) for l in L })
     def remove_edge(self,node1,node2):
         self.edges.discard( frozenset([node1, node2]) )
-        self.neighbours[node1].discard(node2)
-        self.neighbours[node2].discard(node1)
     def remove_edges(self,L):
-        for node1,node2 in L:
-            self.remove_edge(node1,node2)
+        self.edges.difference_update({ frozenset(l) for l in L })
     def copy(self):
         other = graph()
         other.nodes = self.nodes.copy()
         other.edges = self.edges.copy()
-        other.neighbours = {node: self.neighbours[node].copy() for node in self.nodes}
-        other.parent = dict()
-        other.color = dict()
-        other.cycleNumber = None
         return other
-    def getNeighbours(self,u):
-        return {v for v in self.nodes if frozenset([u,v]) in self.edges}
     def numCycles(self):
-        # for details about the algorithms, see https://www.codingninjas.com/codestudio/library/count-of-simple-cycles-in-a-connected-undirected-graph-having-n-vertices
-        self.cycleNumber = 0
-        for v in self.nodes:
-            self.color[v] = None
-            self.parent[v] = None
-        # (0,0) is the start node; should be in any graph handled here
-        self.DFSCycle((0,0),0)
-        return self.cycleNumber
-    def DFSCycle(self,u,p):
-        # u is the currently visited node, p its parent we are coming from
-        # the node is already considered
-        if self.color[u] == 2:
-            return
-        # partially visited node found i.e new cycle found
-        if self.color[u] == 1:
-            self.cycleNumber += 1
-            return
-        # storing parent of u
-        self.parent[u] = p
-        # marking as partially visited
-        self.color[u] = 1
-        for v in self.neighbours[u]:
-            if v == self.parent[u]:
-                continue
-            self.DFSCycle(v, u)
-        # marking as fully visited
-        self.color[u] = 2
-        return
+        # cyclomatic number
+        return len(self.edges)-len(self.nodes)+1
+
 
 
 
