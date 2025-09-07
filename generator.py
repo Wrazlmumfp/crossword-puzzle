@@ -213,15 +213,15 @@ class crossword:
         """Checks whether a given word can be added at position x,y"""
         word = word.upper()
         relevantKeys = self.letterkeys
-        for k in range(len(word)):
+        for k,l in enumerate(word):
             coords = (x+k,y) if hor else (x,y-k)
             left = (x+k,y+1) if hor else (x+1,y-k)
             right = (x+k,y-1) if hor else (x-1,y-k)
             # checks whether letter would overwrite other letter
-            if not(self.isLetter(coords,word[k]) or self.isLetter(coords," ")):
+            if not(self.isLetter(coords,l) or self.isLetter(coords," ")):
                 return False
             # checks whether neighbouring positions are only letters of intersections words
-            if not(self.isLetter(coords,word[k])) and not(self.isLetter(left," ") and self.isLetter(right," ")):
+            if not(self.isLetter(coords,l)) and not(self.isLetter(left," ") and self.isLetter(right," ")):
                 return False
             # checks whether position is already taken by two words
             if coords in self.intersections:
@@ -274,9 +274,8 @@ class crossword:
             return {(0,0,True)}
             return {(0,0,False), (0,0,True)}
         possibleCoordinates = set()
-        for k in range(len(word)):
-            l = word[k]
-            coordinates = {j for j in self.letterkeys if self.isLetter(j,l)}
+        for k,l in enumerate(word):
+            coordinates = self.letter_positions[l]
             for x,y in coordinates:
                 if self.isAddable(word,x-k,y,True):
                     possibleCoordinates.add( (x-k,y,True) )
@@ -574,7 +573,7 @@ def latex(c,title,subtitle,info):
         + "\n".join(info)+"\\par\\bigskip\n\n" \
         + c.latexClues() \
         + "\n\\end{landscape}" \
-        + "\n\n\end{document}"
+        + "\n\n\\end{document}"
     
 
 
@@ -900,7 +899,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             if args is not None and not(args.quiet):
                 print("Doing iteration Nr. " + str(i),end="\r")
             c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
-            if args.minscore is None and i >= args.iterations:
+            if i >= args.iterations:
                 break
             if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
                 continue
