@@ -855,7 +855,7 @@ Note: In puzzle and solution, any appearance of Ä, Ö, Ü, and ß is automatica
             if args is not None and not(args.quiet):
                 print("Doing iteration Nr. " + str(i),end="\r")
             c = crossword.generate(wordDict,sentenceDict,args.columns,args.rows)
-            if i >= args.iterations:
+            if args.iterations is not None and i >= args.iterations:
                 break
             if not(c.score(args.columns,args.rows) > best.score(args.columns,args.rows)):
                 continue
